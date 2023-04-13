@@ -3,6 +3,7 @@ import * as Cesium from 'cesium';
 import {onMounted} from "vue";
 import MeasureDistance from "./classes/MeasureDistance.js";
 // test git
+// test rebase
 Cesium.Ion.defaultAccessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJmM2U1YjYxYS1lNzczLTRlMjQtODEyYi03MjJmNjQyOTQzOWYiLCJpZCI6MTMwNjk3LCJpYXQiOjE2Nzk4OTg4MTd9.vTMp7xouXgtGhI3yV4rHa86YV1bopfqmVJcrbttFODU"
 
 let viewer
