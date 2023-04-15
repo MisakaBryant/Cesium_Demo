@@ -47,25 +47,26 @@ onMounted(()=>{
 
   var city = viewer.scene.primitives.add(new Cesium.Cesium3DTileset(
       {
-        url: Cesium.IonResource.fromAssetId(75343)
+        // url: Cesium.IonResource.fromAssetId(75343)
+          url: "../3dtiles/tileset.json"
       }
   ))
 
   city.style = new Cesium.Cesium3DTileStyle({
     color: {
       conditions: [
-        ["${Height} >= 300", "rgba(45, 0, 75, 0.5)"],
-        ["${Height} >= 200", "rgba(102, 71, 151, 0.7)"],
-        ["${Height} >= 100", "rgb(170, 162, 204)"],
-        ["${Height} >= 50", "rgb(224, 226, 238)"],
-        ["${Height} >= 25", "rgb(252, 230, 200)"],
-        ["${Height} >= 10", "rgb(248, 176, 87)"],
-        ["${Height} >= 5", "rgb(198, 106, 11)"],
+        ["${Floor} >= 70", "rgba(45, 0, 75, 0.4)"],
+        ["${Floor} >= 60", "rgba(102, 71, 151, 0.7)"],
+        ["${Floor} >= 40", "rgb(170, 162, 204)"],
+        ["${Floor} >= 30", "rgb(224, 226, 238)"],
+        ["${Floor} >= 15", "rgb(252, 230, 200)"],
+        ["${Floor} >= 10", "rgb(248, 176, 87)"],
+        ["${Floor} >= 5", "rgb(198, 106, 11)"],
         ["true", "rgb(127, 59, 8)"]
       ]
     }
   })
-
+    viewer.zoomTo(city);
   //加载GeoJson数据
   var CommunityPromise = Cesium.GeoJsonDataSource.load('./assets/CommunityDistricts.geojson');
   var communityEntities;
