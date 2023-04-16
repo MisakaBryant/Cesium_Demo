@@ -37,10 +37,10 @@ onMounted(() => {
     viewer.scene.globe.depthTestAgainstTerrain = true;  //开启深度检测，解决pickPosition不准确问题
 
     viewer.scene.camera.setView({
-        // destination: Cesium.Cartesian3.fromDegrees(-74.01, 40.7, 1200),
+        destination: Cesium.Cartesian3.fromDegrees(118.775907, 32.039101, 2000),
         orientation: {
             heading: 0.0,
-            pitch: Cesium.Math.toRadians(-60),  //设置相机俯仰角度
+            pitch: Cesium.Math.toRadians(-45),  //设置相机俯仰角度
             roll: 0.0
         }
     })
@@ -68,7 +68,7 @@ onMounted(() => {
             ]
         }
     })
-    viewer.zoomTo(city);
+    // viewer.zoomTo(city);
     //加载GeoJson数据
     var CommunityPromise = Cesium.GeoJsonDataSource.load('./assets/CommunityDistricts.geojson');
     var communityEntities;
