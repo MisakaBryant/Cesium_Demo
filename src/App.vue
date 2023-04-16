@@ -33,61 +33,63 @@ onMounted(()=>{
 
   viewer.scene.globe.depthTestAgainstTerrain = true;  //开启深度检测，解决pickPosition不准确问题
 
-  viewer.scene.camera.setView({
-    destination: Cesium.Cartesian3.fromDegrees(-74.01, 40.7, 1200),
-    orientation: {
-      heading: 0.0,
-      pitch: Cesium.Math.toRadians(-60),  //设置相机俯仰角度
-      roll: 0.0
-    }
-  })
+    viewer.scene.camera.setView({
+        destination: Cesium.Cartesian3.fromDegrees(118.775907, 32.039101, 2000),
+        orientation: {
+            heading: 0.0,
+            pitch: Cesium.Math.toRadians(-45),  //设置相机俯仰角度
+            roll: 0.0
+        }
+    })
 
-  var city = viewer.scene.primitives.add(new Cesium.Cesium3DTileset(
-      {
-        url: Cesium.IonResource.fromAssetId(75343)
-      }
-  ))
+    var city = viewer.scene.primitives.add(new Cesium.Cesium3DTileset(
+        {
+            // url: Cesium.IonResource.fromAssetId(75343)
+            // url: Cesium.IonResource.fromAssetId(1642792)
+            url: "/api/3dtiles/tileset.json"
+            // url: "../3dtiles/tileset.json"
+        }
+    ))
 
-  city.style = new Cesium.Cesium3DTileStyle({
-    color: {
-      conditions: [
-        ["${Height} >= 300", "rgb(45, 0, 75)"],
-        ["${Height} >= 200", "rgb(102, 71, 151)"],
-        ["${Height} >= 100", "rgb(170, 162, 204)"],
-        ["${Height} >= 50", "rgb(224, 226, 238)"],
-        ["${Height} >= 25", "rgb(252, 230, 200)"],
-        ["${Height} >= 10", "rgb(248, 176, 87)"],
-        ["${Height} >= 5", "rgb(198, 106, 11)"],
-        ["true", "rgb(127, 59, 8)"]
-      ]
-    }
-  })
-
-  //加载GeoJson数据
-  var CommunityPromise = Cesium.GeoJsonDataSource.load('./assets/CommunityDistricts.geojson');
-  var communityEntities;
-  CommunityPromise.then((dataSource) => {
-    viewer.dataSources.add(dataSource);
-    communityEntities = dataSource.entities.values;
-    for (var i = 0; i < communityEntities.length; i++) {
-      var entity = communityEntities[i];
-      entity.polygon.material = Cesium.Color.fromRandom({
-        red: 0.1,
-        maximumGreen: 0.5,
-        minimumBlue: 0.5,
-        alpha: 0.3
-      });
-      entity.polygon.classificationType = Cesium.ClassificationType.TERRAIN;
-      var polyPosition = entity.polygon.hierarchy.getValue(Cesium.JulianDate.now()).positions;    //获取多边形顶点
-      var polyCenter = Cesium.BoundingSphere.fromPoints(polyPosition).center;   //计算多边形中心点
-      polyCenter = Cesium.Ellipsoid.WGS84.scaleToGeodeticSurface(polyCenter);   //将笛卡尔坐标转换为地形坐标
-      entity.position = polyCenter;   //将多边形中心点赋值给entity的position属性
-      entity.polygon.extrudedHeight = 0;  //设置多边形的高度
-      entity.polygon.extrudedHeightReference = Cesium.HeightReference.CLAMP_TO_GROUND;  //设置多边形贴地
-      entity.polygon.outline = true;  //显示多边形边界
-      entity.polygon.outlineColor = Cesium.Color.GREY;  //设置多边形边界颜色
-    }
-  })
+    city.style = new Cesium.Cesium3DTileStyle({
+        color: {
+            conditions: [
+                ["${Elevation} >= 200", "rgba(45, 0, 75, 0.4)"],
+                ["${Elevation} >= 150", "rgba(102, 71, 151, 0.7)"],
+                ["${Elevation} >= 100", "rgb(170, 162, 204)"],
+                ["${Elevation} >= 60", "rgb(224, 226, 238)"],
+                ["${Elevation} >= 30", "rgb(252, 230, 200)"],
+                ["${Elevation} >= 10", "rgb(248, 176, 87)"],
+                ["${Elevation} >= 5", "rgb(198, 106, 11)"],
+                ["true", "rgb(127, 59, 8)"]
+            ]
+        }
+    })
+    // viewer.zoomTo(city);
+    //加载GeoJson数据
+    var CommunityPromise = Cesium.GeoJsonDataSource.load('./assets/CommunityDistricts.geojson');
+    var communityEntities;
+    CommunityPromise.then((dataSource) => {
+        viewer.dataSources.add(dataSource);
+        communityEntities = dataSource.entities.values;
+        for (var i = 0; i < communityEntities.length; i++) {
+            var entity = communityEntities[i];
+            entity.polygon.material = Cesium.Color.fromRandom({
+                red: 0.1,
+                maximumGreen: 0.5,
+                minimumBlue: 0.5,
+                alpha: 0.3
+            });
+            entity.polygon.classificationType = Cesium.ClassificationType.TERRAIN;
+            var polyPosition = entity.polygon.hierarchy.getValue(Cesium.JulianDate.now()).positions;    //获取多边形顶点
+            var polyCenter = Cesium.BoundingSphere.fromPoints(polyPosition).center;   //计算多边形中心点
+            polyCenter = Cesium.Ellipsoid.WGS84.scaleToGeodeticSurface(polyCenter);   //将笛卡尔坐标转换为地形坐标
+            entity.position = polyCenter;   //将多边形中心点赋值给entity的position属性
+            entity.polygon.heightReference = Cesium.HeightReference.CLAMP_TO_GROUND;  //设置多边形贴地
+            entity.polygon.outline = true;  //显示多边形边界
+            entity.polygon.outlineColor = Cesium.Color.GREY;  //设置多边形边界颜色
+        }
+    })
 
   //添加billboards
   /*var billboards = viewer.scene.primitives.add(new Cesium.BillboardCollection());
