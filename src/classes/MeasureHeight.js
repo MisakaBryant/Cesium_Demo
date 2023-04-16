@@ -42,7 +42,7 @@ export default class MeasureHeight {
         let secondPoint = this.vertexEntities[this.vertexEntities.length - 1];
         secondPoint.position = this.positions[1];
         let line = this.lineEntities[this.lineEntities.length - 1];
-        line.positions = [firstPoint.position, secondPoint.position];
+        line.polyline.positions = this.positions;
         let label = this.labelEntities[this.labelEntities.length - 1];
         label.position = this.positions[1];
         label.text = "高度：" + this.measureHeight + " 米";
