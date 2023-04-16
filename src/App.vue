@@ -49,7 +49,7 @@ onMounted(() => {
         {
             // url: Cesium.IonResource.fromAssetId(75343)
             // url: Cesium.IonResource.fromAssetId(1642792)
-            url: "/api/3dtiles/tileset.json"
+            url: "/api/Cesium_Demo/3dtiles/tileset.json"
             // url: "../3dtiles/tileset.json"
         }
     ))
