@@ -1,12 +1,14 @@
 <script setup>
 import * as Cesium from 'cesium';
-import {onMounted} from "vue";
+import {onMounted, reactive, ref, toRef} from "vue";
 import MeasureDistance from "./classes/MeasureDistance.js";
+import MeasureHeight from "./classes/MeasureHeight.js";
 
 Cesium.Ion.defaultAccessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJmM2U1YjYxYS1lNzczLTRlMjQtODEyYi03MjJmNjQyOTQzOWYiLCJpZCI6MTMwNjk3LCJpYXQiOjE2Nzk4OTg4MTd9.vTMp7xouXgtGhI3yV4rHa86YV1bopfqmVJcrbttFODU"
 
-let viewer
-var measureDistance   //测量直线距离工具
+let viewer = null
+const measureDistance = reactive(new MeasureDistance())   //测量直线距离工具
+const measureHeight = reactive(new MeasureHeight())       //测量高度工具
 
 onMounted(()=>{
   var custom = new Cesium.ArcGisMapServerImageryProvider({
@@ -27,7 +29,7 @@ onMounted(()=>{
     requestWaterMask: true,     //启用水面特效
     requestVertexNormals: true  //启用地形照明
   });
-  // viewer.scene.globe.enableLighting = true;   //启用使用场景光源照亮地球
+  viewer.scene.globe.enableLighting = true;   //启用使用场景光源照亮地球
 
   viewer.scene.globe.depthTestAgainstTerrain = true;  //开启深度检测，解决pickPosition不准确问题
 
@@ -49,8 +51,8 @@ onMounted(()=>{
   city.style = new Cesium.Cesium3DTileStyle({
     color: {
       conditions: [
-        ["${Height} >= 300", "rgba(45, 0, 75, 0.5)"],
-        ["${Height} >= 200", "rgba(102, 71, 151, 0.7)"],
+        ["${Height} >= 300", "rgb(45, 0, 75)"],
+        ["${Height} >= 200", "rgb(102, 71, 151)"],
         ["${Height} >= 100", "rgb(170, 162, 204)"],
         ["${Height} >= 50", "rgb(224, 226, 238)"],
         ["${Height} >= 25", "rgb(252, 230, 200)"],
@@ -80,7 +82,8 @@ onMounted(()=>{
       var polyCenter = Cesium.BoundingSphere.fromPoints(polyPosition).center;   //计算多边形中心点
       polyCenter = Cesium.Ellipsoid.WGS84.scaleToGeodeticSurface(polyCenter);   //将笛卡尔坐标转换为地形坐标
       entity.position = polyCenter;   //将多边形中心点赋值给entity的position属性
-      entity.polygon.heightReference = Cesium.HeightReference.CLAMP_TO_GROUND;  //设置多边形贴地
+      entity.polygon.extrudedHeight = 0;  //设置多边形的高度
+      entity.polygon.extrudedHeightReference = Cesium.HeightReference.CLAMP_TO_GROUND;  //设置多边形贴地
       entity.polygon.outline = true;  //显示多边形边界
       entity.polygon.outlineColor = Cesium.Color.GREY;  //设置多边形边界颜色
     }
@@ -97,18 +100,23 @@ onMounted(()=>{
     scaleByDistance: new Cesium.NearFarScalar(0, 0.5, 5e3, 0.0)
   });*/
 
-  measureDistance = new MeasureDistance(viewer);
+  measureDistance.init(viewer);
+  measureHeight.init(viewer);
 
 })
 
-function activeMeasureDistance() {
+function activateMeasureDistance() {
   measureDistance.activate();
 }
 
-function clearMeasureDistance() {
-  measureDistance.clear();
+function activateMeasureHeight() {
+  measureHeight.activate();
 }
 
+function clearMeasure() {
+  measureDistance.clear();
+  measureHeight.clear();
+}
 
 </script>
 
@@ -117,8 +125,9 @@ function clearMeasureDistance() {
     <el-container height="100%">
       <el-main>
         <el-row id="toolBar">
-          <el-button type="primary" round @click="activeMeasureDistance">测量距离</el-button>
-          <el-button type="primary" round @click="clearMeasureDistance">清除测量</el-button>
+          <el-button type="primary" :disabled="measureDistance.isMeasure" round @click="activateMeasureDistance">测量距离</el-button>
+          <el-button type="primary" :disabled="measureHeight.isMeasure" round @click="activateMeasureHeight">测量高度</el-button>
+          <el-button type="primary" round @click="clearMeasure">清除测量</el-button>
         </el-row>
         <div id="cesiumContainer"></div>
       </el-main>
@@ -131,8 +140,8 @@ function clearMeasureDistance() {
   position: absolute;
   top: 10px;
   left: 10px;
-  height: 10%;
-  width: 50%;
+  height: auto;
+  width: auto;
   z-index: 999;
 }
 

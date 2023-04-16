@@ -1,8 +1,8 @@
-//距离测量类
 import * as Cesium from "cesium";
 
+//距离测量类
 export default class MeasureDistance {
-    constructor(viewer) {
+    init(viewer) {
         this.viewer = viewer;
         this.initEvents();
         this.positions = [];        //存储确定点位
@@ -11,6 +11,7 @@ export default class MeasureDistance {
         this.lineEntities = [];     //存储线实体
         this.labelEntity = undefined;
         this.measureDistance = 0; //测量结果
+        this.isMeasure = false;
     }
 
     //初始化事件
@@ -28,7 +29,6 @@ export default class MeasureDistance {
         this.viewer.enableCursorStyle = false;
         this.viewer._element.style.cursor = 'default';
         this.isMeasure = true;
-        this.measureDistance = 0;
     }
 
     //禁用
@@ -92,8 +92,8 @@ export default class MeasureDistance {
                 text: this.measureDistance + "米",
                 scale: 0.5,
                 font: 'normal 24px MicroSoft YaHei',
-                distanceDisplayCondition: new Cesium.DistanceDisplayCondition(0, 5000),
-                scaleByDistance: new Cesium.NearFarScalar(30, 2, 10000, 1),
+                distanceDisplayCondition: new Cesium.DistanceDisplayCondition(0, 100000),
+                scaleByDistance: new Cesium.NearFarScalar(30, 2, 100000, 1),
                 verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
                 style: Cesium.LabelStyle.FILL_AND_OUTLINE,
                 pixelOffset: new Cesium.Cartesian2(0, -30),
@@ -116,8 +116,8 @@ export default class MeasureDistance {
             type: "MeasureDistanceVertex",
             billboard: {
                 image: "../pic/point.png",
-                scaleByDistance: new Cesium.NearFarScalar(30, 0.3, 10000, 0.1), //设置随图缩放距离和比例
-                distanceDisplayCondition: new Cesium.DistanceDisplayCondition(0, 10000), //设置可见距离 10000米可见
+                scaleByDistance: new Cesium.NearFarScalar(30, 0.3, 100000, 0.1), //设置随图缩放距离和比例
+                distanceDisplayCondition: new Cesium.DistanceDisplayCondition(0, 100000), //设置可见距离 10000米可见
                 verticalOrigin: Cesium.VerticalOrigin.BOTTOM
             },
             point: {
@@ -144,8 +144,8 @@ export default class MeasureDistance {
                 text: "总距离：" + this.measureDistance + "米",
                 scale: 0.5,
                 font: 'normal 26px MicroSoft YaHei',
-                distanceDisplayCondition: new Cesium.DistanceDisplayCondition(0, 5000),
-                scaleByDistance: new Cesium.NearFarScalar(30, 2, 10000, 1),
+                distanceDisplayCondition: new Cesium.DistanceDisplayCondition(0, 100000),
+                scaleByDistance: new Cesium.NearFarScalar(30, 2, 100000, 1),
                 verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
                 style: Cesium.LabelStyle.FILL_AND_OUTLINE,
                 pixelOffset: new Cesium.Cartesian2(0, -50),
@@ -155,8 +155,8 @@ export default class MeasureDistance {
             },
             billboard: {
                 image: "../pic/point.png",
-                scaleByDistance: new Cesium.NearFarScalar(30, 0.3, 10000, 0.1), //设置随图缩放距离和比例
-                distanceDisplayCondition: new Cesium.DistanceDisplayCondition(0, 10000), //设置可见距离 10000米可见
+                scaleByDistance: new Cesium.NearFarScalar(30, 0.3, 100000, 0.1), //设置随图缩放距离和比例
+                distanceDisplayCondition: new Cesium.DistanceDisplayCondition(0, 100000), //设置可见距离 10000米可见
                 verticalOrigin: Cesium.VerticalOrigin.BOTTOM
             },
             point: {
@@ -181,8 +181,7 @@ export default class MeasureDistance {
             this.viewer._element.style.cursor = 'default';
             let position = this.viewer.scene.pickPosition(e.position);
             if (!position) {
-                const ellipsoid = this.viewer.scene.globe.ellipsoid;
-                position = this.viewer.scene.camera.pickEllipsoid(e.position, ellipsoid);
+                position = this.viewer.scene.camera.pickEllipsoid(e.position, this.viewer.scene.globe.ellipsoid);
             }
             if (!position) return;
             this.positions.push(position);
