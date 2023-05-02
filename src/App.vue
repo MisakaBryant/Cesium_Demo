@@ -141,6 +141,7 @@ function activateMeasureHeight() {
 function clearMeasure() {
     measureDistance.clear();
     measureHeight.clear();
+    measureArea.clear();
 }
 
 function activateMeasureArea() {

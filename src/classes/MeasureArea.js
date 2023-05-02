@@ -3,13 +3,14 @@ import * as Cesium from "cesium";
 // 面积测量类
 export default class MeasureArea {
     init(viewer) {
-        this.viewer = viewer
-        this.entityCollection = []
+        this.viewer = viewer;
+        this.entityCollection = [];
     }
     measurePolygon() {
         var positions = [];
         var clickStatus = false;
         var labelEntity = null;
+        var lineEntity = null;
         this.viewer.screenSpaceEventHandler.setInputAction((clickEvent) => {
             clickStatus = true;
             var cartesian = this.viewer.scene.globe.pick(this.viewer.camera.getPickRay(clickEvent.position), this.viewer.scene);
@@ -27,7 +28,8 @@ export default class MeasureArea {
                     }
                     if (positions.length == 1) {
                         positions.push(movePosition);
-                        this.addLine(positions);
+                        lineEntity = this.addLine(positions);
+                        this.entityCollection.push(lineEntity);
                     } else {
                         if (clickStatus) {
                             positions.push(movePosition);
@@ -95,6 +97,12 @@ export default class MeasureArea {
         }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
     };
 
+    clear() {
+        this.entityCollection.forEach(entity => {
+            this.viewer.entities.remove(entity);
+        });
+        this.entityCollection = [];
+    }
     // 添加点
     addPoint(position) {
         this.entityCollection.push(this.viewer.entities.add(new Cesium.Entity({
@@ -109,7 +117,7 @@ export default class MeasureArea {
 
     // 添加线
     addLine(positions) {
-        this.viewer.entities.add(
+        return this.viewer.entities.add(
             new Cesium.Entity({
                 polyline: {
                     positions: new Cesium.CallbackProperty(() => positions, false),
