@@ -133,7 +133,8 @@ export default class MeasureHeight {
       position: new Cesium.CallbackProperty(e => {
         return this.positions[index];
       }, false), type: "MeasureHeightVertex", point: {
-        color: Cesium.Color.FUCHSIA, pixelSize: 6,
+        color: Cesium.Color.FUCHSIA,
+        pixelSize: 6,
         //disableDepthTestDistance: 2000,
       },
     });
