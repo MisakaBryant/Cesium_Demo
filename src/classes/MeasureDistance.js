@@ -42,6 +42,7 @@ export default class MeasureDistance {
     this.positions = [];
   }
 
+
   //计算距离
   spaceDistance(positions) {
     let distance = 0;
@@ -184,7 +185,13 @@ export default class MeasureDistance {
         position = this.viewer.scene.camera.pickEllipsoid(e.position, this.viewer.scene.globe.ellipsoid);
       }
       if (!position) return;
-      this.positions.push(position);
+
+      if (this.positions.length > 1) {
+        this.positions.push(position);
+      } else {
+        this.positions.push(position);
+      }
+
       if (this.positions.length === 1) { //首次点击
         this.createLineEntity();
         this.createStartEntity();
@@ -212,6 +219,7 @@ export default class MeasureDistance {
   //处理鼠标移动
   handleMoveEvent(position) {
     if (this.positions.length < 1) return;
+
     this.tempPositions = this.positions.concat(position);
   }
 

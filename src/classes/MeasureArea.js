@@ -15,7 +15,7 @@ export default class MeasureArea {
             clickStatus = true;
             var cartesian = this.viewer.scene.globe.pick(this.viewer.camera.getPickRay(clickEvent.position), this.viewer.scene);
             if (!cartesian) {
-                return false
+                return false;
             }
             if (positions.length == 0) {
                 positions.push(cartesian.clone()); //鼠标左击 添加第1个点

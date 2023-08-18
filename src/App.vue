@@ -4,6 +4,7 @@ import {onMounted, reactive, ref, toRef} from "vue";
 import MeasureDistance from "./classes/MeasureDistance.js";
 import MeasureHeight from "./classes/MeasureHeight.js";
 import MeasureArea from "./classes/MeasureArea.js";
+import MeasureDistanceFitTerrain from "./classes/MeasureDistanceFitTerrain.js";
 // import {CGCS2000ToWGS84} from "./classes/CGCS2000toWGS84.js";
 
 Cesium.Ion.defaultAccessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJmM2U1YjYxYS1lNzczLTRlMjQtODEyYi03MjJmNjQyOTQzOWYiLCJpZCI6MTMwNjk3LCJpYXQiOjE2Nzk4OTg4MTd9.vTMp7xouXgtGhI3yV4rHa86YV1bopfqmVJcrbttFODU"
@@ -12,6 +13,7 @@ let viewer = null
 const measureDistance = reactive(new MeasureDistance())   //测量直线距离工具
 const measureHeight = reactive(new MeasureHeight())       //测量高度工具
 const measureArea = reactive(new MeasureArea()) // 测量面积工具
+const measureDistanceFitTerrain = reactive(new MeasureDistanceFitTerrain()) // 贴地距离工具
 onMounted(() => {
     //arcgis街道图层，基于wgs84坐标系，但国内地区精度不高
     var custom = new Cesium.ArcGisMapServerImageryProvider({
@@ -31,18 +33,14 @@ onMounted(() => {
         tileMatrixSetID: "GoogleMapsCompatible",
         show: false
     })
+
     viewer = new Cesium.Viewer('cesiumContainer', {
         animation: false,         //不显示轮盘
         baseLayerPicker: false,  //不显示工具栏
         selectionIndicator: false,//不显示选中指示器组件
         infoBox: false,           //不显示信息框
-        imageryProvider: osmLayer
+        // imageryProvider: osmLayer
     });
-    // viewer.terrainProvider = Cesium.createWorldTerrain({
-    //   requestWaterMask: true,     //启用水面特效
-    //   requestVertexNormals: true  //启用地形照明
-    // });
-    // viewer.scene.globe.enableLighting = true;   //启用使用场景光源照亮地球
 
     viewer.scene.globe.depthTestAgainstTerrain = true;  //开启深度检测，解决pickPosition不准确问题
 
@@ -55,6 +53,23 @@ onMounted(() => {
         }
     })
 
+// 地形
+    viewer.terrainProvider = Cesium.createWorldTerrain({
+        //requestWaterMask: true,     //启用水面特效
+        //requestVertexNormals: true  //启用地形照明
+    });
+
+    // var terrain = new Cesium.CesiumTerrainProvider({
+    //     url: '/api/Cesium_Demo/terrains/nanjing',
+    // });
+    // viewer.terrainProvider = terrain;
+
+    // viewer.scene.globe.enableLighting = true;   //启用使用场景光源照亮地球
+
+    // var ellipsoidProvider = new Cesium.EllipsoidTerrainProvider();
+    // viewer.terrainProvider = ellipsoidProvider;
+
+    // 建筑模型
     var city = viewer.scene.primitives.add(new Cesium.Cesium3DTileset(
         {
             // url: Cesium.IonResource.fromAssetId(75343)
@@ -128,6 +143,7 @@ onMounted(() => {
     measureDistance.init(viewer);
     measureHeight.init(viewer);
     measureArea.init(viewer);
+    measureDistanceFitTerrain.init(viewer);
 })
 
 function activateMeasureDistance() {
@@ -142,12 +158,16 @@ function clearMeasure() {
     measureDistance.clear();
     measureHeight.clear();
     measureArea.clear();
+    measureDistanceFitTerrain.clear();
 }
 
 function activateMeasureArea() {
     measureArea.measurePolygon();
 }
 
+function activateMeasureDistanceFitTerrain() {
+    measureDistanceFitTerrain.activate();
+}
 </script>
 
 <template>
@@ -164,6 +184,9 @@ function activateMeasureArea() {
                     </el-button>
                     <el-button type="primary" :disabled="measureArea.isMeasure" round @click="activateMeasureArea">
                         测量面积
+                    </el-button>
+                    <el-button type="primary" :disabled="measureDistanceFitTerrain.isMeasure" round @click="activateMeasureDistanceFitTerrain">
+                        贴地距离
                     </el-button>
                     <el-button type="primary" round @click="clearMeasure">清除测量</el-button>
                 </el-row>
