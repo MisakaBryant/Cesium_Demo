@@ -6,6 +6,17 @@ export default class MeasureArea {
         this.viewer = viewer;
         this.entityCollection = [];
     }
+
+    //显示测量结果
+    showMeasureResult() {
+        this.viewer.entities.add(this.lablEntity);
+    }
+
+    //隐藏测量结果
+    hideMeasureResult() {
+        this.viewer.entities.remove(item);
+    }
+
     measurePolygon() {
         var positions = [];
         var clickStatus = false;
@@ -17,7 +28,7 @@ export default class MeasureArea {
             if (!cartesian) {
                 return false
             }
-            if (positions.length == 0) {
+            if (positions.length === 0) {
                 positions.push(cartesian.clone()); //鼠标左击 添加第1个点
                 this.addPoint(cartesian);
 
@@ -26,7 +37,7 @@ export default class MeasureArea {
                     if (!movePosition) {
                         return false;
                     }
-                    if (positions.length == 1) {
+                    if (positions.length === 1) {
                         positions.push(movePosition);
                         lineEntity = this.addLine(positions);
                         this.entityCollection.push(lineEntity);
@@ -55,7 +66,7 @@ export default class MeasureArea {
                 }, Cesium.ScreenSpaceEventType.MOUSE_MOVE);
 
 
-            } else if (positions.length == 2) {
+            } else if (positions.length === 2) {
                 if (!cartesian) {
                     return false
                 }
@@ -137,7 +148,7 @@ export default class MeasureArea {
                     return new Cesium.PolygonHierarchy(positions);
                 }, false),
                 material: Cesium.Color.RED.withAlpha(0.6),
-                classificationType: Cesium.ClassificationType.BOTH // 贴地表和贴模型,如果设置了，这不能使用挤出高度
+                classificationType: Cesium.ClassificationType.BOTH // 贴地表和贴模型，如果设置了，这不能使用挤出高度
             }
         })));
     };

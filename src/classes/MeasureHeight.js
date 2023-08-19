@@ -21,6 +21,20 @@ export default class MeasureHeight {
     this.MeasureEndEvent = new Cesium.Event(); //结束事件
   }
 
+  //显示测量结果
+  showMeasureResult() {
+    this.labelEntities.forEach(item => {
+      this.viewer.entities.add(item);
+    })
+  }
+
+  //隐藏测量结果
+  hideMeasureResult() {
+    this.labelEntities.forEach(item => {
+      this.viewer.entities.remove(item);
+    })
+  }
+
   //激活
   activate() {
     this.deactivate();
@@ -56,7 +70,7 @@ export default class MeasureHeight {
     }
 
     this.unRegisterEvents();
-    this.viewer._element.style.cursor = 'pointer';
+    this.viewer._element.style.cursor = 'default';
     this.viewer.enableCursorStyle = true;
     this.isMeasure = false;
     this.positions = [];
@@ -100,7 +114,7 @@ export default class MeasureHeight {
         material: Cesium.Color.YELLOW,
         depthFailMaterial: new Cesium.PolylineDashMaterialProperty({
           color: Cesium.Color.RED,
-        }),
+        })
       }
     });
     this.lineEntities.push(line);
