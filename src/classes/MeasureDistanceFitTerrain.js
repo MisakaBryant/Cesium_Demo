@@ -185,15 +185,17 @@ export default class MeasureDistance {
             }
             if (!position) return;
 
-            if (this.positions.length > 1) {
+            if (this.positions.length > 0) {
                 var input = [];
                 input.push(this.positions[this.positions.length - 1]);
                 input.push(position);
                 var pos = this.pointInterpolation(input);
-                this.positions.push(pos);
-                this.positions.push(position);
+                //console.log(pos);
+                this.positions.push(...pos);
+                //console.log(this.positions);
             } else {
                 this.positions.push(position);
+                //console.log(this.positions[0]);
             }
 
             if (this.positions.length === 1) { //首次点击
@@ -228,37 +230,27 @@ export default class MeasureDistance {
         input.push(position);
         let pos = this.pointInterpolation(input);
 
-        this.tempPositions = this.positions.concat(pos);
+        this.tempPositions = this.positions.concat(...pos);
     }
 
     // 插值
     pointInterpolation(points) {
-        // var spline = new Cesium.LinearSpline({
-        //   times: [0.0, 1],
-        //   points: points,
-        // });
-        // var pos = [];
-        // var distance = this.spaceDistance(points);
-        // let num = Math.floor(parseFloat(distance) * 2);
-        // for (var i = 0; i <= num; i++) {
-        //   var cartesian3 = spline.evaluate(i / num);
-        //   cartesian3 = this.getTerrainHeight(cartesian3);
-        //   pos.push(cartesian3);
-        // }
-        // return pos;
-
         let arr = [];
         let distance = this.spaceDistance(points);
         let duration = Math.floor(parseFloat(distance));
-        for (let i = 1; i <= 3; i++) {
-            let pos = Cesium.Cartesian3.lerp(points[0], points[1], i / 3, new Cesium.Cartesian3());
+
+        for (let i = 1; i <= 5; i++) {
+            let pos = Cesium.Cartesian3.lerp(points[0], points[1], i / 5, new Cesium.Cartesian3());
+            //console.log(pos)
             let p = this.getTerrainHeight(pos);
+            //console.log(p);
             arr.push(p);
         }
+        //console.log(points[0]);
+        //console.log(points[1]);
         // if (duration % forNum !== 0) {
         //   arr.push(points[1]);
         // }
-
         return arr;
     }
 
@@ -267,37 +259,17 @@ export default class MeasureDistance {
         let cartographic = [];
         cartographic.push(Cesium.Cartographic.fromCartesian(position));
 
-        let promise = Cesium.sampleTerrain(this.viewer.terrainProvider, 5, cartographic);
-        // Cesium.when(promise, function(updatedCartographic) {
-        //   cartographic.height = updatedCartographic.height;
-        // });
+        let promise = Cesium.sampleTerrainMostDetailed(this.viewer.terrainProvider,  cartographic);
+
+        let temp = cartographic[0];
         promise.then(function(updatedCartographic) {
-            cartographic[0].height = updatedCartographic[0].height;
+            temp.height = updatedCartographic[0].height;
         }, function(error) {
             console.log(error);
         });
 
-        let res = Cesium.Cartesian3.fromRadians(cartographic[0].longitude, cartographic[0].latitude, cartographic[0].height);
+        let res = Cesium.Cartesian3.fromRadians(temp.longitude, temp.latitude, temp.height);
         return res;
-
-        // var cartographics = [];
-        // for (const element of positions) {
-        //   let cartographic = Cesium.Cartographic.fromCartesian(element);
-        //   cartographics.push(cartographic);
-        // }
-
-        // var promise = Cesium.sampleTerrainMostDetailed(this.viewer.terrainProvider, cartographics);
-        // Cesium.when(promise, function(updatedCartographics) {
-        //     for (var i = 0; i < updatedCartographics.length; i++) {
-        //         cartographics[i].height = updatedCartographics[i].height;
-        //     }
-        // });
-
-        // var res = [];
-        // for (const element of cartographics) {
-        //   res.push(Cesium.Cartesian3.fromRadians(element.longitude, element.latitude, element.height));
-        // }
-        // return res;
     }
 
     //右键事件
