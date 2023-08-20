@@ -5,6 +5,8 @@ import MeasureDistance from "./classes/MeasureDistance.js";
 import MeasureHeight from "./classes/MeasureHeight.js";
 import MeasureArea from "./classes/MeasureArea.js";
 import MeasureDistanceFitTerrain from "./classes/MeasureDistanceFitTerrain.js";
+import DrawPoint from "./classes/DrawPoint.js";
+import DrawLine from "./classes/DrawLine.js";
 // import {CGCS2000ToWGS84} from "./classes/CGCS2000toWGS84.js";
 
 Cesium.Ion.defaultAccessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJmM2U1YjYxYS1lNzczLTRlMjQtODEyYi03MjJmNjQyOTQzOWYiLCJpZCI6MTMwNjk3LCJpYXQiOjE2Nzk4OTg4MTd9.vTMp7xouXgtGhI3yV4rHa86YV1bopfqmVJcrbttFODU"
@@ -14,6 +16,10 @@ const measureDistance = reactive(new MeasureDistance())   //测量直线距离�
 const measureHeight = reactive(new MeasureHeight())       //测量高度工具
 const measureArea = reactive(new MeasureArea()) // 测量面积工具
 const measureDistanceFitTerrain = reactive(new MeasureDistanceFitTerrain()) // 贴地距离工具
+const showMeasureResult = ref(false)  //是否显示测量结果
+const drawPoint = reactive(new DrawPoint()) //绘制点工具
+const drawLine = reactive(new DrawLine()) //绘制线工具
+
 onMounted(() => {
     //arcgis街道图层，基于wgs84坐标系，但国内地区精度不高
     var custom = new Cesium.ArcGisMapServerImageryProvider({
@@ -144,6 +150,8 @@ onMounted(() => {
     measureHeight.init(viewer);
     measureArea.init(viewer);
     measureDistanceFitTerrain.init(viewer);
+    drawPoint.init(viewer);
+    drawLine.init(viewer);
 })
 
 function activateMeasureDistance() {
@@ -168,28 +176,57 @@ function activateMeasureArea() {
 function activateMeasureDistanceFitTerrain() {
     measureDistanceFitTerrain.activate();
 }
+
+function showOrHideMeasureResult(showMeasureResult) {
+    if (showMeasureResult) {
+        measureDistance.showMeasureResult();
+    } else {
+        measureDistance.hideMeasureResult();
+    }
+}
+
+function activeDrawPoint() {
+    drawPoint.activate();
+}
+
+function activeDrawLine() {
+    drawLine.activate();
+}
+
 </script>
 
 <template>
     <div>
         <el-container height="100%">
             <el-main>
-                <el-row id="toolBar">
+                <el-space id="MeasureBar">
                     <el-button type="primary" :disabled="measureDistance.isMeasure" round
-                               @click="activateMeasureDistance">
+                               @click="activateMeasureDistance()">
                         测量距离
                     </el-button>
-                    <el-button type="primary" :disabled="measureHeight.isMeasure" round @click="activateMeasureHeight">
+                    <el-button type="primary" :disabled="measureHeight.isMeasure" round @click="activateMeasureHeight()">
                         测量高度
                     </el-button>
-                    <el-button type="primary" :disabled="measureArea.isMeasure" round @click="activateMeasureArea">
+                    <el-button type="primary" :disabled="measureArea.isMeasure" round @click="activateMeasureArea()">
                         测量面积
                     </el-button>
                     <el-button type="primary" :disabled="measureDistanceFitTerrain.isMeasure" round @click="activateMeasureDistanceFitTerrain">
                         贴地距离
                     </el-button>
-                    <el-button type="primary" round @click="clearMeasure">清除测量</el-button>
-                </el-row>
+                    <el-button type="primary" round @click="clearMeasure()">清除测量</el-button>
+                    <el-switch v-model="showMeasureResult" style="--el-switch-on-color: #419fff; --el-switch-off-color: #ff4949; --el-margin-left: 5%;"
+                               inline-prompt active-text="显示测量结果" inactive-text="隐藏测量结果"
+                               @change="showOrHideMeasureResult(showMeasureResult)"></el-switch>
+                </el-space>
+                
+                <el-space id="DrawBar">
+                    <el-button type="primary" :disabled="drawPoint.active" round @click="activeDrawPoint()">
+                        绘制点
+                    </el-button>
+                    <el-button type="primary" :disabled="drawLine.active" round @click="activeDrawLine()">
+                        绘制线
+                    </el-button>
+                </el-space>
                 <div id="cesiumContainer"></div>
             </el-main>
         </el-container>
@@ -197,9 +234,18 @@ function activateMeasureDistanceFitTerrain() {
 </template>
 
 <style>
-#toolBar {
+#MeasureBar {
     position: absolute;
     top: 10px;
+    left: 10px;
+    height: auto;
+    width: auto;
+    z-index: 999;
+}
+
+#DrawBar {
+    position: absolute;
+    top: 60px;
     left: 10px;
     height: auto;
     width: auto;

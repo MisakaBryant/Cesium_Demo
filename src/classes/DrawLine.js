@@ -1,7 +1,7 @@
 import * as Cesium from "cesium";
 
-//距离测量类
-export default class MeasureDistance {
+//绘制
+export default class DrawLine {
   init(viewer) {
     this.viewer = viewer;
     this.initEvents();
@@ -9,9 +9,7 @@ export default class MeasureDistance {
     this.tempPositions = [];    //存储点位
     this.vertexEntities = [];   //存储点位实体
     this.lineEntities = [];     //存储线实体
-    this.labelEntities = [];      //存储标签实体
-    this.measureDistance = 0; //测量结果
-    this.isMeasure = false;
+    this.isActivated = false;
   }
 
   //初始化事件
@@ -21,20 +19,6 @@ export default class MeasureDistance {
     this.MeasureEndEvent = new Cesium.Event(); //结束事件
   }
 
-  //显示测量结果
-  showMeasureResult() {
-    this.labelEntities.forEach(item => {
-      this.viewer.entities.add(item);
-    })
-  }
-
-  //隐藏测量结果
-  hideMeasureResult() {
-    this.labelEntities.forEach(item => {
-      this.viewer.entities.remove(item);
-    })
-  }
-
   //激活
   activate() {
     this.deactivate();
@@ -42,28 +26,18 @@ export default class MeasureDistance {
     //设置鼠标状态
     this.viewer.enableCursorStyle = false;
     this.viewer._element.style.cursor = 'default';
-    this.isMeasure = true;
+    this.isActivated = true;
   }
 
   //禁用
   deactivate() {
-    if (!this.isMeasure) return;
+    if (!this.isActivated) return;
     this.unRegisterEvents();
     this.viewer._element.style.cursor = 'default';
     this.viewer.enableCursorStyle = true;
-    this.isMeasure = false;
+    this.isActivated = false;
     this.tempPositions = [];
     this.positions = [];
-  }
-
-
-  //计算距离
-  spaceDistance(positions) {
-    let distance = 0;
-    for (let i = 0; i < positions.length - 1; i++) {
-      distance += Cesium.Cartesian3.distance(positions[i], positions[i + 1]);
-    }
-    return distance.toFixed(2);
   }
 
   //清空绘制
@@ -80,10 +54,6 @@ export default class MeasureDistance {
       this.viewer.entities.remove(item);
     });
     this.vertexEntities = [];
-    this.labelEntities.forEach(item => {
-      this.viewer.entities.remove(item);
-    });
-    this.labelEntity = [];
   }
 
   //创建线对象
@@ -94,39 +64,22 @@ export default class MeasureDistance {
           return this.tempPositions;
         }, false),
         width: 2,
-        material: Cesium.Color.YELLOW,
-        depthFailMaterial: Cesium.Color.YELLOW
+        material: Cesium.Color.AQUA,
+        depthFailMaterial: new Cesium.PolylineDashMaterialProperty({
+          color: Cesium.Color.LIGHTBLUE,
+        })
       }
     })
   }
 
   //创建线节点
   createVertex() {
-    this.measureDistance = this.spaceDistance(this.positions);
-    let resultLabel = this.viewer.entities.add({
-      position: this.positions[this.positions.length - 1],
-      id: "MeasureDistanceLabel" + this.positions[this.positions.length - 1],
-      type: "MeasureDistanceLabel",
-      label: {
-        text: this.measureDistance + "米",
-        scale: 0.5,
-        font: 'normal 24px MicroSoft YaHei',
-        distanceDisplayCondition: new Cesium.DistanceDisplayCondition(0, 100000),
-        scaleByDistance: new Cesium.NearFarScalar(30, 2, 100000, 1),
-        verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
-        style: Cesium.LabelStyle.FILL_AND_OUTLINE,
-        pixelOffset: new Cesium.Cartesian2(0, -30),
-        outlineWidth: 9,
-        outlineColor: Cesium.Color.WHITE
-      },
-    });
-    this.labelEntities.push(resultLabel);
     let vertexEntity = this.viewer.entities.add({
       position: this.positions[this.positions.length - 1],
       id: "MeasureDistanceVertex" + this.positions[this.positions.length - 1],
       type: "MeasureDistanceVertex",
       point: {
-        color: Cesium.Color.FUCHSIA,
+        color: Cesium.Color.VIOLET,
         pixelSize: 8,
         disableDepthTestDistance: 500,
       },
@@ -136,23 +89,12 @@ export default class MeasureDistance {
 
   //创建起点
   createStartEntity() {
-    let resultLabel = this.viewer.entities.add({
-      position: this.positions[0],
-      type: "MeasureDistanceLabel",
-      billboard: {
-        image: "../pic/point.png",
-        scaleByDistance: new Cesium.NearFarScalar(30, 0.3, 100000, 0.1), //设置随图缩放距离和比例
-        distanceDisplayCondition: new Cesium.DistanceDisplayCondition(0, 100000), //设置可见距离 10000米可见
-        verticalOrigin: Cesium.VerticalOrigin.BOTTOM
-      }
-    });
-    this.labelEntities.push(resultLabel);
     let vertexEntity = this.viewer.entities.add({
       position: this.positions[0],
       type: "MeasureDistanceVertex",
       point: {
-        color: Cesium.Color.FUCHSIA,
-        pixelSize: 6,
+        color: Cesium.Color.VIOLET,
+        pixelSize: 8,
       },
     });
     this.vertexEntities.push(vertexEntity);
@@ -163,41 +105,13 @@ export default class MeasureDistance {
     //结束时删除最后一个节点的距离标识
     let lastVertex = this.vertexEntities.pop();
     this.viewer.entities.remove(lastVertex);
-    let lastLabel = this.labelEntities.pop();
-    this.viewer.entities.remove(lastLabel);
 
-    this.measureDistance = this.spaceDistance(this.positions);
-
-    let resultLabel = this.viewer.entities.add({
-      position: this.positions[this.positions.length - 1],
-      type: "MeasureDistanceLabel",
-      label: {
-        text: "总距离：" + this.measureDistance + "米",
-        scale: 0.5,
-        font: 'normal 26px MicroSoft YaHei',
-        distanceDisplayCondition: new Cesium.DistanceDisplayCondition(0, 100000),
-        scaleByDistance: new Cesium.NearFarScalar(30, 2, 100000, 1),
-        verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
-        style: Cesium.LabelStyle.FILL_AND_OUTLINE,
-        pixelOffset: new Cesium.Cartesian2(0, -50),
-        outlineWidth: 9,
-        outlineColor: Cesium.Color.WHITE,
-        eyeOffset: new Cesium.Cartesian3(0, 0, -10),
-      },
-      billboard: {
-        image: "../pic/point.png",
-        scaleByDistance: new Cesium.NearFarScalar(30, 0.3, 100000, 0.1), //设置随图缩放距离和比例
-        distanceDisplayCondition: new Cesium.DistanceDisplayCondition(0, 100000), //设置可见距离 10000米可见
-        verticalOrigin: Cesium.VerticalOrigin.BOTTOM
-      }
-    });
-    this.labelEntities.push(resultLabel);
     let vertexEntity = this.viewer.entities.add({
       position: this.positions[this.positions.length - 1],
       type: "MeasureDistanceVertex",
       point: {
-        color: Cesium.Color.FUCHSIA,
-        pixelSize: 6,
+        color: Cesium.Color.VIOLET,
+        pixelSize: 8,
       },
     });
     this.vertexEntities.push(vertexEntity);
@@ -220,13 +134,7 @@ export default class MeasureDistance {
         position = this.viewer.scene.camera.pickEllipsoid(e.position, this.viewer.scene.globe.ellipsoid);
       }
       if (!position) return;
-
-      if (this.positions.length > 1) {
-        this.positions.push(position);
-      } else {
-        this.positions.push(position);
-      }
-
+      this.positions.push(position);
       if (this.positions.length === 1) { //首次点击
         this.createLineEntity();
         this.createStartEntity();
@@ -240,7 +148,7 @@ export default class MeasureDistance {
   //鼠标移动事件
   mouseMoveEvent() {
     this.handler.setInputAction(e => {
-      if (!this.isMeasure) return;
+      if (!this.isActivated) return;
       this.viewer._element.style.cursor = 'default';
       let position = this.viewer.scene.pickPosition(e.endPosition);
       if (!position) {
@@ -254,14 +162,13 @@ export default class MeasureDistance {
   //处理鼠标移动
   handleMoveEvent(position) {
     if (this.positions.length < 1) return;
-
     this.tempPositions = this.positions.concat(position);
   }
 
   //右键事件
   rightClickEvent() {
     this.handler.setInputAction(e => {
-      if (!this.isMeasure || this.positions.length < 1) {
+      if (!this.isActivated || this.positions.length < 1) {
         this.deactivate();
         this.clear();
       } else {
@@ -269,20 +176,16 @@ export default class MeasureDistance {
         this.lineEntity.polyline = {
           positions: this.positions,
           width: 2,
-          material: Cesium.Color.YELLOW,
-          depthFailMaterial: Cesium.Color.YELLOW
+          material: Cesium.Color.AQUA,
+          depthFailMaterial: new Cesium.PolylineDashMaterialProperty({
+            color: Cesium.Color.LIGHTBLUE,
+          })
         };
         this.lineEntities.push(this.lineEntity);
-        this.measureEnd();
+        this.deactivate();
       }
 
     }, Cesium.ScreenSpaceEventType.RIGHT_CLICK);
-  }
-
-  //测量结束
-  measureEnd() {
-    this.deactivate();
-    this.MeasureEndEvent.raiseEvent(this.measureDistance); //触发结束事件 传入结果
   }
 
   //解除鼠标事件
