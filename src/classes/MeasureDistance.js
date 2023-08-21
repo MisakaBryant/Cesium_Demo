@@ -9,7 +9,7 @@ export default class MeasureDistance {
     this.tempPositions = [];    //存储点位
     this.vertexEntities = [];   //存储点位实体
     this.lineEntities = [];     //存储线实体
-    this.labelEntities = [];      //存储标签实体
+    this.labelEntities = [];  //存储标签实体
     this.measureDistance = 0; //测量结果
     this.isMeasure = false;
   }

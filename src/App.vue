@@ -59,10 +59,10 @@ onMounted(() => {
         }
     })
 
-// 地形
+    // 地形
     viewer.terrainProvider = Cesium.createWorldTerrain({
         //requestWaterMask: true,     //启用水面特效
-        //requestVertexNormals: true  //启用地形照明
+        requestVertexNormals: true  //启用地形照明
     });
 
     // var terrain = new Cesium.CesiumTerrainProvider({
@@ -70,7 +70,7 @@ onMounted(() => {
     // });
     // viewer.terrainProvider = terrain;
 
-    // viewer.scene.globe.enableLighting = true;   //启用使用场景光源照亮地球
+    viewer.scene.globe.enableLighting = true;   //启用使用场景光源照亮地球
 
     // var ellipsoidProvider = new Cesium.EllipsoidTerrainProvider();
     // viewer.terrainProvider = ellipsoidProvider;
