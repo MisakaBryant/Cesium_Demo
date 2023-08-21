@@ -4,6 +4,7 @@ import {onMounted, reactive, ref, toRef} from "vue";
 import MeasureDistance from "./classes/MeasureDistance.js";
 import MeasureHeight from "./classes/MeasureHeight.js";
 import MeasureArea from "./classes/MeasureArea.js";
+import MeasureDistanceFitTerrain from "./classes/MeasureDistanceFitTerrain.js";
 import DrawPoint from "./classes/DrawPoint.js";
 import DrawLine from "./classes/DrawLine.js";
 // import {CGCS2000ToWGS84} from "./classes/CGCS2000toWGS84.js";
@@ -14,6 +15,7 @@ let viewer = null
 const measureDistance = reactive(new MeasureDistance())   //测量直线距离工具
 const measureHeight = reactive(new MeasureHeight())       //测量高度工具
 const measureArea = reactive(new MeasureArea()) // 测量面积工具
+const measureDistanceFitTerrain = reactive(new MeasureDistanceFitTerrain()) // 贴地距离工具
 const showMeasureResult = ref(false)  //是否显示测量结果
 const drawPoint = reactive(new DrawPoint()) //绘制点工具
 const drawLine = reactive(new DrawLine()) //绘制线工具
@@ -37,18 +39,14 @@ onMounted(() => {
         tileMatrixSetID: "GoogleMapsCompatible",
         show: false
     })
+
     viewer = new Cesium.Viewer('cesiumContainer', {
         animation: false,         //不显示轮盘
         baseLayerPicker: false,  //不显示工具栏
         selectionIndicator: false,//不显示选中指示器组件
         infoBox: false,           //不显示信息框
-        imageryProvider: osmLayer
+        // imageryProvider: osmLayer
     });
-    // viewer.terrainProvider = Cesium.createWorldTerrain({
-    //   requestWaterMask: true,     //启用水面特效
-    //   requestVertexNormals: true  //启用地形照明
-    // });
-    // viewer.scene.globe.enableLighting = true;   //启用使用场景光源照亮地球
 
     viewer.scene.globe.depthTestAgainstTerrain = true;  //开启深度检测，解决pickPosition不准确问题
 
@@ -61,6 +59,23 @@ onMounted(() => {
         }
     })
 
+// 地形
+    viewer.terrainProvider = Cesium.createWorldTerrain({
+        //requestWaterMask: true,     //启用水面特效
+        //requestVertexNormals: true  //启用地形照明
+    });
+
+    // var terrain = new Cesium.CesiumTerrainProvider({
+    //     url: '/api/Cesium_Demo/terrains/nanjing',
+    // });
+    // viewer.terrainProvider = terrain;
+
+    // viewer.scene.globe.enableLighting = true;   //启用使用场景光源照亮地球
+
+    // var ellipsoidProvider = new Cesium.EllipsoidTerrainProvider();
+    // viewer.terrainProvider = ellipsoidProvider;
+
+    // 建筑模型
     var city = viewer.scene.primitives.add(new Cesium.Cesium3DTileset(
         {
             // url: Cesium.IonResource.fromAssetId(75343)
@@ -134,6 +149,7 @@ onMounted(() => {
     measureDistance.init(viewer);
     measureHeight.init(viewer);
     measureArea.init(viewer);
+    measureDistanceFitTerrain.init(viewer);
     drawPoint.init(viewer);
     drawLine.init(viewer);
 })
@@ -150,10 +166,15 @@ function clearMeasure() {
     measureDistance.clear();
     measureHeight.clear();
     measureArea.clear();
+    measureDistanceFitTerrain.clear();
 }
 
 function activateMeasureArea() {
     measureArea.measurePolygon();
+}
+
+function activateMeasureDistanceFitTerrain() {
+    measureDistanceFitTerrain.activate();
 }
 
 function showOrHideMeasureResult(showMeasureResult) {
@@ -189,11 +210,15 @@ function activeDrawLine() {
                     <el-button type="primary" :disabled="measureArea.isMeasure" round @click="activateMeasureArea()">
                         测量面积
                     </el-button>
+                    <el-button type="primary" :disabled="measureDistanceFitTerrain.isMeasure" round @click="activateMeasureDistanceFitTerrain">
+                        贴地距离
+                    </el-button>
                     <el-button type="primary" round @click="clearMeasure()">清除测量</el-button>
                     <el-switch v-model="showMeasureResult" style="--el-switch-on-color: #419fff; --el-switch-off-color: #ff4949; --el-margin-left: 5%;"
                                inline-prompt active-text="显示测量结果" inactive-text="隐藏测量结果"
                                @change="showOrHideMeasureResult(showMeasureResult)"></el-switch>
                 </el-space>
+                
                 <el-space id="DrawBar">
                     <el-button type="primary" :disabled="drawPoint.active" round @click="activeDrawPoint()">
                         绘制点
