@@ -77,16 +77,18 @@ export default class MeasureDistanceFitTerrain {
         }, false),
         width: 2,
         material: Cesium.Color.YELLOW,
-        depthFailMaterial: Cesium.Color.YELLOW
+        depthFailMaterial: Cesium.Color.YELLOW,
+        clampToGround: true,
       }
     })
   }
 
   //创建线节点
-  createVertex() {
+  createVertex(pos) {
     this.measureDistance = this.spaceDistance(this.positions);
     let vertexEntity = this.viewer.entities.add({
-      position: this.positions[this.positions.length - 1],
+      // position: this.positions[this.positions.length - 1],
+      position: pos,
       id: "MeasureDistanceVertex" + this.positions[this.positions.length - 1],
       type: "MeasureDistanceVertex",
       label: {
@@ -186,26 +188,39 @@ export default class MeasureDistanceFitTerrain {
       }
       if (!position) return;
 
+      let flag = false;
+
       if (this.positions.length > 0) {
         var input = [];
         input.push(this.positions[this.positions.length - 1]);
         input.push(position);
         this.pointInterpolation(input).then(res => {
           //console.log(res);
-          this.positions.push(...res);
+          let arr = [];
+          for (let i = 1; ; i++) {
+            if (!res.get(i)) break;
+            arr.push(res.get(i));
+          }
+          flag = true;
+          this.positions.push(...arr);
+
           //console.log(this.positions);
+          // this.positions.push(position);
+          this.createVertex(position);
         });
       } else {
         this.positions.push(position);
         //console.log(this.positions[0]);
       }
 
+
       if (this.positions.length === 1) { //首次点击
         this.createLineEntity();
         this.createStartEntity();
+        // this.createVertex();
         return;
       }
-      this.createVertex();
+
 
     }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
   }
@@ -227,27 +242,22 @@ export default class MeasureDistanceFitTerrain {
   //处理鼠标移动
   handleMoveEvent(position) {
     if (this.positions.length < 1) return;
-    let input = [];
-    input.push(this.positions[this.positions.length - 1]);
-    input.push(position);
-    this.pointInterpolation(input).then(res => {
-      this.tempPositions = this.positions.concat(...res);
-    });
+    this.tempPositions = this.positions.concat(position);
   }
 
   // 插值
   pointInterpolation(points) {
-    let arr = [];
+    let arr = new Map();
     let distance = this.spaceDistance(points);
-    let duration = Math.floor(parseFloat(distance));
-
+    // let duration = Math.floor(parseFloat(distance)) / 2;
+    let duration = 20;
     return new Promise((resolve) => {
-      for (let i = 1; i <= 5; i++) {
-        let pos = Cesium.Cartesian3.lerp(points[0], points[1], i / 5, new Cesium.Cartesian3());
+      for (let i = 1; i <= duration; i++) {
+        let pos = Cesium.Cartesian3.lerp(points[0], points[1], i / duration, new Cesium.Cartesian3());
         //console.log("1" + pos)
         this.getTerrainHeight(pos).then((res) => {
-          arr.push(res);
-          if (arr.length === 5) {
+          arr.set(i, res);
+          if (arr.size === duration) {
             console.log(arr);
             resolve(arr);
           }
@@ -291,7 +301,8 @@ export default class MeasureDistanceFitTerrain {
           positions: this.positions,
           width: 2,
           material: Cesium.Color.YELLOW,
-          depthFailMaterial: Cesium.Color.YELLOW
+          depthFailMaterial: Cesium.Color.YELLOW,
+          clampToGround: true,
         };
         this.lineEntities.push(this.lineEntity);
         this.measureEnd();
