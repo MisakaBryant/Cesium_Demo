@@ -125,10 +125,11 @@ export default class MeasureHeight {
     let label = this.viewer.entities.add({
       position: new Cesium.CallbackProperty(e => {
         return this.positions[this.positions.length - 1]; //返回最后一个点
-      }, false), label: {
+      }, false),
+      label: {
         text: "",
         scale: 0.5,
-        font: 'normal 40px MicroSoft YaHei',
+        font: 'normal 26px MicroSoft YaHei',
         distanceDisplayCondition: new Cesium.DistanceDisplayCondition(0, 100000),
         scaleByDistance: new Cesium.NearFarScalar(30, 2, 100000, 1),
         verticalOrigin: Cesium.VerticalOrigin.BOTTOM,

@@ -248,7 +248,7 @@ export default class MeasureDistanceFitTerrain {
         this.getTerrainHeight(pos).then((res) => {
           arr.push(res);
           if (arr.length === 5) {
-            console.log(arr);
+            //console.log(arr);
             resolve(arr);
           }
         });

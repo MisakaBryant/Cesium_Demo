@@ -7,6 +7,7 @@ import MeasureArea from "./classes/MeasureArea.js";
 import MeasureDistanceFitTerrain from "./classes/MeasureDistanceFitTerrain.js";
 import DrawPoint from "./classes/DrawPoint.js";
 import DrawLine from "./classes/DrawLine.js";
+import MeasureAltitude from "./classes/MeasureAltitude.js";
 // import {CGCS2000ToWGS84} from "./classes/CGCS2000toWGS84.js";
 
 Cesium.Ion.defaultAccessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJmM2U1YjYxYS1lNzczLTRlMjQtODEyYi03MjJmNjQyOTQzOWYiLCJpZCI6MTMwNjk3LCJpYXQiOjE2Nzk4OTg4MTd9.vTMp7xouXgtGhI3yV4rHa86YV1bopfqmVJcrbttFODU"
@@ -15,6 +16,7 @@ let viewer = null
 const measureDistance = reactive(new MeasureDistance())   //测量直线距离工具
 const measureHeight = reactive(new MeasureHeight())       //测量高度工具
 const measureArea = reactive(new MeasureArea()) // 测量面积工具
+const measureAltitude = reactive(new MeasureAltitude()) // 测量海拔工具
 const measureDistanceFitTerrain = reactive(new MeasureDistanceFitTerrain()) // 贴地距离工具
 const showMeasureResult = ref(false)  //是否显示测量结果
 const drawPoint = reactive(new DrawPoint()) //绘制点工具
@@ -149,6 +151,7 @@ onMounted(() => {
     measureDistance.init(viewer);
     measureHeight.init(viewer);
     measureArea.init(viewer);
+    measureAltitude.init(viewer);
     measureDistanceFitTerrain.init(viewer);
     drawPoint.init(viewer);
     drawLine.init(viewer);
@@ -162,10 +165,15 @@ function activateMeasureHeight() {
     measureHeight.activate();
 }
 
+function activateMeasureAltitude() {
+    measureAltitude.activate();
+}
+
 function clearMeasure() {
     measureDistance.clear();
     measureHeight.clear();
     measureArea.clear();
+    measureAltitude.clear();
     measureDistanceFitTerrain.clear();
 }
 
@@ -204,18 +212,22 @@ function activeDrawLine() {
                                @click="activateMeasureDistance()">
                         测量距离
                     </el-button>
+                    <el-button type="primary" :disabled="measureDistanceFitTerrain.isMeasure" round
+                               @click="activateMeasureDistanceFitTerrain()">
+                        贴地距离
+                    </el-button>
                     <el-button type="primary" :disabled="measureHeight.isMeasure" round @click="activateMeasureHeight()">
                         测量高度
+                    </el-button>
+                    <el-button type="primary" :disabled="measureAltitude.isMeasure" round @click="activateMeasureAltitude()">
+                        测量海拔
                     </el-button>
                     <el-button type="primary" :disabled="measureArea.isMeasure" round @click="activateMeasureArea()">
                         测量面积
                     </el-button>
-                    <el-button type="primary" :disabled="measureDistanceFitTerrain.isMeasure" round @click="activateMeasureDistanceFitTerrain">
-                        贴地距离
-                    </el-button>
                     <el-button type="primary" round @click="clearMeasure()">清除测量</el-button>
                     <el-switch v-model="showMeasureResult" style="--el-switch-on-color: #419fff; --el-switch-off-color: #ff4949; --el-margin-left: 5%;"
-                               inline-prompt active-text="显示测量结果" inactive-text="隐藏测量结果"
+                               inline-prompt active-text="显示测量结果" inactive-text="隐藏测量结果" size="large"
                                @change="showOrHideMeasureResult(showMeasureResult)"></el-switch>
                 </el-space>
                 

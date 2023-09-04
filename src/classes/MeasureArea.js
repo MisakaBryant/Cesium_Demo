@@ -5,6 +5,7 @@ export default class MeasureArea {
     init(viewer) {
         this.viewer = viewer;
         this.entityCollection = [];
+        this.isMeasure = false;
     }
 
     //显示测量结果
@@ -18,6 +19,8 @@ export default class MeasureArea {
     }
 
     measurePolygon() {
+        this.isMeasure = true;
+
         var positions = [];
         var clickStatus = false;
         var labelEntity = null;
@@ -92,6 +95,8 @@ export default class MeasureArea {
                     this.viewer.screenSpaceEventHandler.removeInputAction(Cesium.ScreenSpaceEventType.LEFT_CLICK);
                     this.viewer.screenSpaceEventHandler.removeInputAction(Cesium.ScreenSpaceEventType.MOUSE_MOVE);
                     this.viewer.screenSpaceEventHandler.removeInputAction(Cesium.ScreenSpaceEventType.RIGHT_CLICK);
+
+                    this.isMeasure = false;
 
                 }, Cesium.ScreenSpaceEventType.RIGHT_CLICK);
 
