@@ -36,7 +36,7 @@ export default class MeasureDistanceFitTerrain {
   deactivate() {
     if (!this.isMeasure) return;
     this.unRegisterEvents();
-    this.viewer._element.style.cursor = 'pointer';
+    this.viewer._element.style.cursor = 'default';
     this.viewer.enableCursorStyle = true;
     this.isMeasure = false;
     this.tempPositions = [];

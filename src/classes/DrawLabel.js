@@ -1,14 +1,15 @@
 import * as Cesium from "cesium";
+import {ElMessage, ElMessageBox} from "element-plus";
 
-//测量海拔类
-export default class MeasureAltitude {
+//文字标签类
+export default class DrawLabel {
   init(viewer) {
     this.viewer = viewer;
     this.initEvents();
     this.pointEntities = [];
     this.labelEntities = [];
     this.positions = [];
-    this.isMeasure = false;
+    this.isActive = false;
   }
 
   //初始化事件
@@ -25,16 +26,16 @@ export default class MeasureAltitude {
     //设置鼠标状态
     this.viewer.enableCursorStyle = false;
     this.viewer._element.style.cursor = 'default';
-    this.isMeasure = true;
+    this.isActive = true;
   }
 
   //禁用
   deactivate() {
-    if (!this.isMeasure) return;
+    if (!this.isActive) return;
     this.unRegisterEvents();
     this.viewer._element.style.cursor = 'default';
     this.viewer.enableCursorStyle = true;
-    this.isMeasure = false;
+    this.isActive = false;
   }
 
   //注册鼠标事件
@@ -62,19 +63,13 @@ export default class MeasureAltitude {
     this.labelEntities = [];
   }
 
-  //获取海拔
-  getAltitude(position) {
-    let cartographic = Cesium.Cartographic.fromCartesian(position);
-    return cartographic.height;
-  }
-
   //创建点位
   createPoint() {
     let entity = this.viewer.entities.add({
       id: "point" + this.positions[this.positions.length - 1],
       position: this.positions[this.positions.length - 1],
       point: {
-        color: Cesium.Color.GREEN,
+        color: Cesium.Color.ANTIQUEWHITE,
         pixelSize: 10,
         disableDepthTestDistance: 500,
       }
@@ -83,11 +78,11 @@ export default class MeasureAltitude {
   }
 
   //创建标签
-  createLabel() {
+  createLabel(text) {
     let label = this.viewer.entities.add({
       position: this.positions[this.positions.length - 1],
       label: {
-        text: "海拔：" + this.getAltitude(this.positions[this.positions.length - 1]).toFixed(2) + "米",
+        text: text,
         scale: 0.5,
         font: 'normal 26px MicroSoft YaHei',
         distanceDisplayCondition: new Cesium.DistanceDisplayCondition(0, 100000),
@@ -102,6 +97,21 @@ export default class MeasureAltitude {
     this.labelEntities.push(label);
   }
 
+  getLabelAndDraw() {
+    ElMessageBox.prompt('请输入标签内容', '提示', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+    }).then(({ value }) => {
+      this.createPoint();
+      this.createLabel(value);
+    }).catch(() => {
+      ElMessage({
+        type: 'info',
+        message: '取消输入'
+      });
+    });
+  }
+
   //左键点击事件
   leftClickEvent() {
     //单击鼠标左键画点点击事件
@@ -113,9 +123,7 @@ export default class MeasureAltitude {
       }
       if (!position) return;
       this.positions.push(position);
-      this.createPoint();
-      this.createLabel();
-      //console.log("left click");
+      this.getLabelAndDraw();
       this.deactivate();
     }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
   }

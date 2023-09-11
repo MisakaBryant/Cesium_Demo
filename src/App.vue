@@ -8,6 +8,7 @@ import MeasureDistanceFitTerrain from "./classes/MeasureDistanceFitTerrain.js";
 import DrawPoint from "./classes/DrawPoint.js";
 import DrawLine from "./classes/DrawLine.js";
 import MeasureAltitude from "./classes/MeasureAltitude.js";
+import DrawLabel from "./classes/DrawLabel.js";
 // import {CGCS2000ToWGS84} from "./classes/CGCS2000toWGS84.js";
 
 Cesium.Ion.defaultAccessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJmM2U1YjYxYS1lNzczLTRlMjQtODEyYi03MjJmNjQyOTQzOWYiLCJpZCI6MTMwNjk3LCJpYXQiOjE2Nzk4OTg4MTd9.vTMp7xouXgtGhI3yV4rHa86YV1bopfqmVJcrbttFODU"
@@ -21,6 +22,7 @@ const measureDistanceFitTerrain = reactive(new MeasureDistanceFitTerrain()) // �
 const showMeasureResult = ref(false)  //是否显示测量结果
 const drawPoint = reactive(new DrawPoint()) //绘制点工具
 const drawLine = reactive(new DrawLine()) //绘制线工具
+const drawLabel = reactive(new DrawLabel()) //绘制标签工具
 
 onMounted(() => {
     //arcgis街道图层，基于wgs84坐标系，但国内地区精度不高
@@ -155,6 +157,7 @@ onMounted(() => {
     measureDistanceFitTerrain.init(viewer);
     drawPoint.init(viewer);
     drawLine.init(viewer);
+    drawLabel.init(viewer);
 })
 
 function activateMeasureDistance() {
@@ -201,6 +204,16 @@ function activeDrawLine() {
     drawLine.activate();
 }
 
+function activeDrawLabel() {
+    drawLabel.activate();
+}
+
+function clearDraw() {
+    drawPoint.clear();
+    drawLine.clear();
+    drawLabel.clear();
+}
+
 </script>
 
 <template>
@@ -238,6 +251,10 @@ function activeDrawLine() {
                     <el-button type="primary" :disabled="drawLine.active" round @click="activeDrawLine()">
                         绘制线
                     </el-button>
+                    <el-button type="primary" :disabled="drawLabel.active" round @click="activeDrawLabel()">
+                        添加文字标签
+                    </el-button>
+                    <el-button type="primary" round @click="clearDraw()">清除绘制</el-button>
                 </el-space>
                 <div id="cesiumContainer"></div>
             </el-main>

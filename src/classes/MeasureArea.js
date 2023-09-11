@@ -124,7 +124,7 @@ export default class MeasureArea {
         this.entityCollection.push(this.viewer.entities.add(new Cesium.Entity({
             position: position,
             point: {
-                color: Cesium.Color.BLUE,
+                color: Cesium.Color.FUCHSIA,
                 pixelSize: 5,
                 heightReference: Cesium.HeightReference.NONE
             }
