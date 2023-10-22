@@ -56,7 +56,6 @@ export default class MeasureDistance {
     this.positions = [];
   }
 
-
   //计算距离
   spaceDistance(positions) {
     let distance = 0;
@@ -83,7 +82,7 @@ export default class MeasureDistance {
     this.labelEntities.forEach(item => {
       this.viewer.entities.remove(item);
     });
-    this.labelEntity = [];
+    this.labelEntities = [];
   }
 
   //创建线对象

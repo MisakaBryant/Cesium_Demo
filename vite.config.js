@@ -11,6 +11,11 @@ export default defineConfig({
         }
     },
     server: {
+        hmr: {
+            protocol: 'ws',
+            host: 'localhost',
+        },
+
         base: './',
         proxy: {
             '/api': {

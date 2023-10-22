@@ -18,6 +18,20 @@ export default class MeasureAltitude {
     this.MeasureEndEvent = new Cesium.Event(); //结束事件
   }
 
+  //显示测量结果
+  showMeasureResult() {
+    this.labelEntities.forEach(item => {
+      this.viewer.entities.add(item);
+    })
+  }
+
+  //隐藏测量结果
+  hideMeasureResult() {
+    this.labelEntities.forEach(item => {
+      this.viewer.entities.remove(item);
+    })
+  }
+
   //激活
   activate() {
     this.deactivate();
