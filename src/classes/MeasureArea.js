@@ -173,6 +173,20 @@ export default class MeasureArea {
         )
     }
 
+    //显示测量结果
+    showMeasureResult() {
+        this.labelEntities.forEach(item => {
+            this.viewer.entities.add(item);
+        })
+    }
+
+    //隐藏测量结果
+    hideMeasureResult() {
+        this.labelEntities.forEach(item => {
+            this.viewer.entities.remove(item);
+        })
+    }
+
 
     /*方向*/
     Bearing(from, to) {
