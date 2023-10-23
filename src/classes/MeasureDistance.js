@@ -262,7 +262,6 @@ export default class MeasureDistance {
     this.handler.setInputAction(e => {
       if (!this.isMeasure || this.positions.length < 1) {
         this.deactivate();
-        this.clear();
       } else {
         this.createEndEntity();
         this.lineEntity.polyline = {

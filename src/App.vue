@@ -1,7 +1,7 @@
 <script setup>
 import * as Cesium from 'cesium';
 import {onMounted, reactive, ref} from "vue";
-import { Location, Menu as IconMenu } from '@element-plus/icons-vue'
+import {Operation, Pouring, Drizzling, Menu} from '@element-plus/icons-vue'
 import MeasureDistance from "./classes/MeasureDistance.js";
 import MeasureHeight from "./classes/MeasureHeight.js";
 import MeasureArea from "./classes/MeasureArea.js";
@@ -11,6 +11,9 @@ import DrawLine from "./classes/DrawLine.js";
 import MeasureAltitude from "./classes/MeasureAltitude.js";
 import DrawLabel from "./classes/DrawLabel.js";
 import MeasureAngle from "./classes/MeasureAngle.js";
+import RainEffect from "./filters/rain.js";
+import SnowEffect from "./filters/snow.js";
+
 // import {CGCS2000ToWGS84} from "./classes/CGCS2000toWGS84.js";
 
 Cesium.Ion.defaultAccessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJmM2U1YjYxYS1lNzczLTRlMjQtODEyYi03MjJmNjQyOTQzOWYiLCJpZCI6MTMwNjk3LCJpYXQiOjE2Nzk4OTg4MTd9.vTMp7xouXgtGhI3yV4rHa86YV1bopfqmVJcrbttFODU"
@@ -27,10 +30,17 @@ const drawPoint = reactive(new DrawPoint()) //绘制点工具
 const drawLine = reactive(new DrawLine()) //绘制线工具
 const drawLabel = reactive(new DrawLabel()) //绘制标签工具
 
-const requestWaterMask = ref(true) //是否请求水面特效
-const requestVertexNormals = ref(true) //是否请求地形照明
-const enableLighting = ref(true) //是否启用场景光源照亮地球
-
+const rainEffect = reactive(new RainEffect({
+    tiltAngle: -0.2, // 雨滴倾斜角度
+    rainSize: 0.12, // 雨滴大小
+    rainSpeed: 120.0, // 雨速
+})) //雨滴特效
+const rain = ref(false) //是否开启雨天
+const snowEffect = reactive(new SnowEffect({
+    snowSize: 0.02, // 雪花大小
+    snowSpeed: 60.0, // 雪速
+})) //雪花特效
+const snow = ref(false) //是否开启雪天
 
 onMounted(() => {
     //arcgis街道图层，基于wgs84坐标系，但国内地区精度不高
@@ -40,8 +50,19 @@ onMounted(() => {
     //openstreetmap街道图层，基于wgs84坐标系
     var osmLayer = new Cesium.UrlTemplateImageryProvider({
         url: "https://tile-{s}.openstreetmap.fr/hot/{z}/{x}/{y}.png",
-        subdomains: ["a", "b", "c", "d"],
+        subdomains: ["a", "b", "c"],
     })
+    const osm = new Cesium.OpenStreetMapImageryProvider({
+        url : 'https://tile.openstreetmap.org/'
+    });
+    var osmL = new Cesium.ImageryLayer(osm);
+
+    var osmBlack = new Cesium.UrlTemplateImageryProvider({
+        url: "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png ",
+        subdomains: ["a", "b", "c", "d"],
+
+    })
+
     //百度卫星影像，基于cscg2000坐标系
     var baiduLayer = new Cesium.UrlTemplateImageryProvider({
         url: "https://webst02.is.autonavi.com/appmaptile?style=6&x={x}&y={y}&z={z}",
@@ -57,8 +78,9 @@ onMounted(() => {
         baseLayerPicker: false,  //不显示工具栏
         selectionIndicator: false,//不显示选中指示器组件
         infoBox: false,           //不显示信息框
-        imageryProvider: osmLayer
     });
+
+    viewer.imageryLayers.addImageryProvider(osmLayer);
 
     viewer.scene.globe.depthTestAgainstTerrain = true;  //开启深度检测，解决pickPosition不准确问题
 
@@ -73,8 +95,8 @@ onMounted(() => {
 
     // 地形
     viewer.terrainProvider = Cesium.createWorldTerrain({
-        requestWaterMask: requestWaterMask.value,     //启用水面特效
-        requestVertexNormals: requestVertexNormals.value  //启用地形照明
+        requestWaterMask: false,     //启用水面特效
+        requestVertexNormals: true  //启用地形照明
     });
 
     // var terrain = new Cesium.CesiumTerrainProvider({
@@ -82,7 +104,7 @@ onMounted(() => {
     // });
     // viewer.terrainProvider = terrain;
 
-    viewer.scene.globe.enableLighting = enableLighting.value;   //启用使用场景光源照亮地球
+    viewer.scene.globe.enableLighting = true;   //启用使用场景光源照亮地球
 
     // var ellipsoidProvider = new Cesium.EllipsoidTerrainProvider();
     // viewer.terrainProvider = ellipsoidProvider;
@@ -100,18 +122,18 @@ onMounted(() => {
     city.style = new Cesium.Cesium3DTileStyle({
         color: {
             conditions: [
-                ["${Elevation} >= 200", "rgb(45, 0, 75)"],
-                ["${Elevation} >= 150", "rgb(102, 71, 151)"],
-                ["${Elevation} >= 100", "rgb(170, 162, 204)"],
-                ["${Elevation} >= 60", "rgb(224, 226, 238)"],
-                ["${Elevation} >= 30", "rgb(252, 230, 200)"],
-                ["${Elevation} >= 10", "rgb(248, 176, 87)"],
-                ["${Elevation} >= 5", "rgb(198, 106, 11)"],
-                ["true", "rgb(127, 59, 8)"]
+                ["${Elevation} >= 200", "rgb(67,125,212)"],
+                ["${Elevation} >= 150", "rgb(121,114,216)"],
+                ["${Elevation} >= 100", "rgb(106,148,212)"],
+                ["${Elevation} >= 60", "rgb(87,77,216)"],
+                ["${Elevation} >= 30", "rgb(85,77,185)"],
+                ["${Elevation} >= 10", "rgb(0,155,149)"],
+                ["${Elevation} >= 5", "rgb(29,116,113)"],
+                ["true", "rgb(0,101,97)"]
             ]
         }
     })
-    // viewer.zoomTo(city);
+
     //加载GeoJson数据
     /*  var CommunityPromise = Cesium.GeoJsonDataSource.load('https://geo.datav.aliyun.com/areas_v3/bound/geojson?code=320100_full');
       var communityEntities;
@@ -167,6 +189,10 @@ onMounted(() => {
     drawPoint.init(viewer);
     drawLine.init(viewer);
     drawLabel.init(viewer);
+    rainEffect.init(viewer);
+    snowEffect.init(viewer);
+    rainEffect.show(false);
+    snowEffect.show(false);
 })
 
 function activateMeasureDistance() {
@@ -243,71 +269,82 @@ function clearDraw() {
         <el-container height="100%">
             <el-main>
                 <el-space id="MeasureBar">
-                    <el-button type="primary" :disabled="measureDistance.isMeasure" round
+                    <el-button type="primary" :disabled="measureDistance.isMeasure" round color="#303336"
                                @click="activateMeasureDistance()">
                         测量距离
                     </el-button>
-                    <el-button type="primary" :disabled="measureDistanceFitTerrain.isMeasure" round
+                    <el-button type="primary" :disabled="measureDistanceFitTerrain.isMeasure" round color="#303336"
                                @click="activateMeasureDistanceFitTerrain()">
                         贴地距离
                     </el-button>
-                    <el-button type="primary" :disabled="measureHeight.isMeasure" round @click="activateMeasureHeight()">
+                    <el-button type="primary" :disabled="measureHeight.isMeasure" round color="#303336"
+                               @click="activateMeasureHeight()">
                         测量高度
                     </el-button>
-                    <el-button type="primary" :disabled="measureAltitude.isMeasure" round @click="activateMeasureAltitude()">
+                    <el-button type="primary" :disabled="measureAltitude.isMeasure" round color="#303336"
+                               @click="activateMeasureAltitude()">
                         测量海拔
                     </el-button>
-                    <el-button type="primary" :disabled="measureArea.isMeasure" round @click="activateMeasureArea()">
+                    <el-button type="primary" :disabled="measureArea.isMeasure" round color="#303336"
+                               @click="activateMeasureArea()">
                         测量面积
                     </el-button>
-                    <el-button type="primary" :disabled="measureAngle.isMeasure" round @click="activateMeasureAngle()">
+                    <el-button type="primary" :disabled="measureAngle.isMeasure" round color="#303336"
+                               @click="activateMeasureAngle()">
                         测量角度
                     </el-button>
-                    <el-button type="primary" round @click="clearMeasure()">清除测量</el-button>
-                    <el-switch v-model="showMeasureResult" style="--el-switch-on-color: #419fff; --el-switch-off-color: #ff4949; --el-margin-left: 5%;"
+                    <el-button type="primary" round color="#303336" @click="clearMeasure()">清除测量</el-button>
+                    <el-switch v-model="showMeasureResult" style="--el-switch-on-color: #303336; --el-switch-off-color: #6e7072; --el-margin-left: 5%;"
                                inline-prompt active-text="显示测量结果" inactive-text="隐藏测量结果" size="large"
                                @change="showOrHideMeasureResult(showMeasureResult)"></el-switch>
                 </el-space>
 
                 <el-space id="DrawBar">
-                    <el-button type="primary" :disabled="drawPoint.active" round @click="activeDrawPoint()">
+                    <el-button type="primary" :disabled="drawPoint.active" round color="#303336"
+                               @click="activeDrawPoint()">
                         绘制点
                     </el-button>
-                    <el-button type="primary" :disabled="drawLine.active" round @click="activeDrawLine()">
+                    <el-button type="primary" :disabled="drawLine.active" round color="#303336"
+                               @click="activeDrawLine()">
                         绘制线
                     </el-button>
-                    <el-button type="primary" :disabled="drawLabel.active" round @click="activeDrawLabel()">
+                    <el-button type="primary" :disabled="drawLabel.active" round color="#303336"
+                               @click="activeDrawLabel()">
                         添加文字标签
                     </el-button>
-                    <el-button type="primary" round @click="clearDraw()">清除绘制</el-button>
+                    <el-button type="primary" round color="#303336" @click="clearDraw()">清除绘制</el-button>
                 </el-space>
 
                 <el-space id="menu">
                     <el-menu
-                      default-active="2"
-                      :collapse=true
+                      background-color="#303336"
+                      :collapse=false
                     >
                         <el-sub-menu index="1">
                             <template #title>
-                                <el-icon><location /></el-icon>
-                                <span>Navigator One</span>
+                                <el-icon><Operation color="#ffffff" /></el-icon>
                             </template>
-                            <el-menu-item-group>
-                                <template #title><span>Group One</span></template>
+                            <el-menu-item-group title="图层设置">
                                 <el-menu-item index="1-1">item one</el-menu-item>
                                 <el-menu-item index="1-2">item two</el-menu-item>
                             </el-menu-item-group>
-                            <el-menu-item-group title="Group Two">
-                                <el-menu-item index="1-3">item three</el-menu-item>
+                            <el-menu-item-group title="显示设置">
+                                <el-menu-item index="1-3">
+                                    <el-text style="color: #ffffff;">雨天</el-text>
+                                    <el-icon><Pouring color="#ffffff" /></el-icon>
+                                    <el-switch v-model="rain" style="--el-switch-on-color: #303336; --el-switch-off-color: #6e7072; --el-margin-left: 5%;"
+                                               @change="rainEffect.show(rain)"></el-switch>
+                                </el-menu-item>
+                                <el-menu-item index="1-4">
+                                    <el-text style="color: #ffffff;">雪天</el-text>
+                                    <el-icon><Drizzling color="#ffffff" /></el-icon>
+                                    <el-switch v-model="snow" style="--el-switch-on-color: #303336; --el-switch-off-color: #6e7072; --el-margin-left: 5%;"
+                                               @change="snowEffect.show(snow)"></el-switch>
+                                </el-menu-item>
                             </el-menu-item-group>
-                            <el-sub-menu index="1-4">
-                                <template #title><span>item four</span></template>
-                                <el-menu-item index="1-4-1">item one</el-menu-item>
-                            </el-sub-menu>
                         </el-sub-menu>
                         <el-menu-item index="2">
-                            <el-icon><iconMenu /></el-icon>
-                            <template #title>Navigator Two</template>
+                            <el-icon><Menu color="#ffffff" /></el-icon>
                         </el-menu-item>
                     </el-menu>
                 </el-space>
