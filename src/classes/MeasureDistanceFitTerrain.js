@@ -10,7 +10,7 @@ export default class MeasureDistanceFitTerrain {
     this.tempPositions = [];    //存储点位
     this.vertexEntities = [];   //存储点位实体
     this.lineEntities = [];     //存储线实体
-    this.labelEntity = undefined;
+    this.labelEntities = [];
     this.measureDistance = 0; //测量结果
     this.isMeasure = false;
   }
@@ -20,6 +20,20 @@ export default class MeasureDistanceFitTerrain {
     this.handler = new Cesium.ScreenSpaceEventHandler(this.viewer.scene.canvas);
     this.MeasureStartEvent = new Cesium.Event(); //开始事件
     this.MeasureEndEvent = new Cesium.Event(); //结束事件
+  }
+
+  //显示测量结果
+  showMeasureResult() {
+    this.labelEntities.forEach(item => {
+      this.viewer.entities.add(item);
+    })
+  }
+
+  //隐藏测量结果
+  hideMeasureResult() {
+    this.labelEntities.forEach(item => {
+      this.viewer.entities.remove(item);
+    })
   }
 
   //激活
@@ -36,7 +50,7 @@ export default class MeasureDistanceFitTerrain {
   deactivate() {
     if (!this.isMeasure) return;
     this.unRegisterEvents();
-    this.viewer._element.style.cursor = 'pointer';
+    this.viewer._element.style.cursor = 'default';
     this.viewer.enableCursorStyle = true;
     this.isMeasure = false;
     this.tempPositions = [];

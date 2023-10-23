@@ -1,12 +1,16 @@
 <script setup>
 import * as Cesium from 'cesium';
-import {onMounted, reactive, ref, toRef} from "vue";
+import {onMounted, reactive, ref} from "vue";
+import { Location, Menu as IconMenu } from '@element-plus/icons-vue'
 import MeasureDistance from "./classes/MeasureDistance.js";
 import MeasureHeight from "./classes/MeasureHeight.js";
 import MeasureArea from "./classes/MeasureArea.js";
 import MeasureDistanceFitTerrain from "./classes/MeasureDistanceFitTerrain.js";
 import DrawPoint from "./classes/DrawPoint.js";
 import DrawLine from "./classes/DrawLine.js";
+import MeasureAltitude from "./classes/MeasureAltitude.js";
+import DrawLabel from "./classes/DrawLabel.js";
+import MeasureAngle from "./classes/MeasureAngle.js";
 // import {CGCS2000ToWGS84} from "./classes/CGCS2000toWGS84.js";
 
 Cesium.Ion.defaultAccessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJmM2U1YjYxYS1lNzczLTRlMjQtODEyYi03MjJmNjQyOTQzOWYiLCJpZCI6MTMwNjk3LCJpYXQiOjE2Nzk4OTg4MTd9.vTMp7xouXgtGhI3yV4rHa86YV1bopfqmVJcrbttFODU"
@@ -15,10 +19,18 @@ let viewer = null
 const measureDistance = reactive(new MeasureDistance())   //测量直线距离工具
 const measureHeight = reactive(new MeasureHeight())       //测量高度工具
 const measureArea = reactive(new MeasureArea()) // 测量面积工具
+const measureAltitude = reactive(new MeasureAltitude()) // 测量海拔工具
 const measureDistanceFitTerrain = reactive(new MeasureDistanceFitTerrain()) // 贴地距离工具
-const showMeasureResult = ref(false)  //是否显示测量结果
+const measureAngle = reactive(new MeasureAngle()) // 测量角度工具
+const showMeasureResult = ref(true)  //是否显示测量结果
 const drawPoint = reactive(new DrawPoint()) //绘制点工具
 const drawLine = reactive(new DrawLine()) //绘制线工具
+const drawLabel = reactive(new DrawLabel()) //绘制标签工具
+
+const requestWaterMask = ref(true) //是否请求水面特效
+const requestVertexNormals = ref(true) //是否请求地形照明
+const enableLighting = ref(true) //是否启用场景光源照亮地球
+
 
 onMounted(() => {
     //arcgis街道图层，基于wgs84坐标系，但国内地区精度不高
@@ -45,7 +57,7 @@ onMounted(() => {
         baseLayerPicker: false,  //不显示工具栏
         selectionIndicator: false,//不显示选中指示器组件
         infoBox: false,           //不显示信息框
-        // imageryProvider: osmLayer
+        imageryProvider: osmLayer
     });
 
     viewer.scene.globe.depthTestAgainstTerrain = true;  //开启深度检测，解决pickPosition不准确问题
@@ -61,8 +73,8 @@ onMounted(() => {
 
     // 地形
     viewer.terrainProvider = Cesium.createWorldTerrain({
-        //requestWaterMask: true,     //启用水面特效
-        requestVertexNormals: true  //启用地形照明
+        requestWaterMask: requestWaterMask.value,     //启用水面特效
+        requestVertexNormals: requestVertexNormals.value  //启用地形照明
     });
 
     // var terrain = new Cesium.CesiumTerrainProvider({
@@ -70,7 +82,7 @@ onMounted(() => {
     // });
     // viewer.terrainProvider = terrain;
 
-    viewer.scene.globe.enableLighting = true;   //启用使用场景光源照亮地球
+    viewer.scene.globe.enableLighting = enableLighting.value;   //启用使用场景光源照亮地球
 
     // var ellipsoidProvider = new Cesium.EllipsoidTerrainProvider();
     // viewer.terrainProvider = ellipsoidProvider;
@@ -80,7 +92,7 @@ onMounted(() => {
         {
             // url: Cesium.IonResource.fromAssetId(75343)
             // url: Cesium.IonResource.fromAssetId(1642792)
-            url: "/api/Cesium_Demo/3dtiles/tileset.json"
+            url: "./3dtiles/tileset.json"
             // url: "../3dtiles/tileset.json"
         }
     ))
@@ -149,9 +161,12 @@ onMounted(() => {
     measureDistance.init(viewer);
     measureHeight.init(viewer);
     measureArea.init(viewer);
+    measureAltitude.init(viewer);
     measureDistanceFitTerrain.init(viewer);
+    measureAngle.init(viewer);
     drawPoint.init(viewer);
     drawLine.init(viewer);
+    drawLabel.init(viewer);
 })
 
 function activateMeasureDistance() {
@@ -162,11 +177,17 @@ function activateMeasureHeight() {
     measureHeight.activate();
 }
 
+function activateMeasureAltitude() {
+    measureAltitude.activate();
+}
+
 function clearMeasure() {
     measureDistance.clear();
     measureHeight.clear();
     measureArea.clear();
+    measureAltitude.clear();
     measureDistanceFitTerrain.clear();
+    measureAngle.clear();
 }
 
 function activateMeasureArea() {
@@ -177,11 +198,23 @@ function activateMeasureDistanceFitTerrain() {
     measureDistanceFitTerrain.activate();
 }
 
+function activateMeasureAngle() {
+    measureAngle.activate();
+}
+
 function showOrHideMeasureResult(showMeasureResult) {
     if (showMeasureResult) {
         measureDistance.showMeasureResult();
+        measureDistanceFitTerrain.showMeasureResult();
+        measureHeight.showMeasureResult();
+        measureAltitude.showMeasureResult();
+        measureAngle.showMeasureResult();
     } else {
         measureDistance.hideMeasureResult();
+        measureDistanceFitTerrain.hideMeasureResult();
+        measureHeight.hideMeasureResult();
+        measureAltitude.hideMeasureResult();
+        measureAngle.hideMeasureResult();
     }
 }
 
@@ -191,6 +224,16 @@ function activeDrawPoint() {
 
 function activeDrawLine() {
     drawLine.activate();
+}
+
+function activeDrawLabel() {
+    drawLabel.activate();
+}
+
+function clearDraw() {
+    drawPoint.clear();
+    drawLine.clear();
+    drawLabel.clear();
 }
 
 </script>
@@ -204,21 +247,28 @@ function activeDrawLine() {
                                @click="activateMeasureDistance()">
                         测量距离
                     </el-button>
+                    <el-button type="primary" :disabled="measureDistanceFitTerrain.isMeasure" round
+                               @click="activateMeasureDistanceFitTerrain()">
+                        贴地距离
+                    </el-button>
                     <el-button type="primary" :disabled="measureHeight.isMeasure" round @click="activateMeasureHeight()">
                         测量高度
+                    </el-button>
+                    <el-button type="primary" :disabled="measureAltitude.isMeasure" round @click="activateMeasureAltitude()">
+                        测量海拔
                     </el-button>
                     <el-button type="primary" :disabled="measureArea.isMeasure" round @click="activateMeasureArea()">
                         测量面积
                     </el-button>
-                    <el-button type="primary" :disabled="measureDistanceFitTerrain.isMeasure" round @click="activateMeasureDistanceFitTerrain">
-                        贴地距离
+                    <el-button type="primary" :disabled="measureAngle.isMeasure" round @click="activateMeasureAngle()">
+                        测量角度
                     </el-button>
                     <el-button type="primary" round @click="clearMeasure()">清除测量</el-button>
                     <el-switch v-model="showMeasureResult" style="--el-switch-on-color: #419fff; --el-switch-off-color: #ff4949; --el-margin-left: 5%;"
-                               inline-prompt active-text="显示测量结果" inactive-text="隐藏测量结果"
+                               inline-prompt active-text="显示测量结果" inactive-text="隐藏测量结果" size="large"
                                @change="showOrHideMeasureResult(showMeasureResult)"></el-switch>
                 </el-space>
-                
+
                 <el-space id="DrawBar">
                     <el-button type="primary" :disabled="drawPoint.active" round @click="activeDrawPoint()">
                         绘制点
@@ -226,7 +276,42 @@ function activeDrawLine() {
                     <el-button type="primary" :disabled="drawLine.active" round @click="activeDrawLine()">
                         绘制线
                     </el-button>
+                    <el-button type="primary" :disabled="drawLabel.active" round @click="activeDrawLabel()">
+                        添加文字标签
+                    </el-button>
+                    <el-button type="primary" round @click="clearDraw()">清除绘制</el-button>
                 </el-space>
+
+                <el-space id="menu">
+                    <el-menu
+                      default-active="2"
+                      :collapse=true
+                    >
+                        <el-sub-menu index="1">
+                            <template #title>
+                                <el-icon><location /></el-icon>
+                                <span>Navigator One</span>
+                            </template>
+                            <el-menu-item-group>
+                                <template #title><span>Group One</span></template>
+                                <el-menu-item index="1-1">item one</el-menu-item>
+                                <el-menu-item index="1-2">item two</el-menu-item>
+                            </el-menu-item-group>
+                            <el-menu-item-group title="Group Two">
+                                <el-menu-item index="1-3">item three</el-menu-item>
+                            </el-menu-item-group>
+                            <el-sub-menu index="1-4">
+                                <template #title><span>item four</span></template>
+                                <el-menu-item index="1-4-1">item one</el-menu-item>
+                            </el-sub-menu>
+                        </el-sub-menu>
+                        <el-menu-item index="2">
+                            <el-icon><iconMenu /></el-icon>
+                            <template #title>Navigator Two</template>
+                        </el-menu-item>
+                    </el-menu>
+                </el-space>
+
                 <div id="cesiumContainer"></div>
             </el-main>
         </el-container>
@@ -258,5 +343,14 @@ function activeDrawLine() {
     left: 0;
     right: 0;
     bottom: 0;
+}
+
+#menu {
+    position: absolute;
+    top: 110px;
+    left: 10px;
+    height: auto;
+    width: auto;
+    z-index: 999;
 }
 </style>

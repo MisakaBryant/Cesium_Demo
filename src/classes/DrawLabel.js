@@ -1,11 +1,13 @@
 import * as Cesium from "cesium";
+import {ElMessage, ElMessageBox} from "element-plus";
 
-//绘制点位类
-export default class DrawPoint {
+//文字标签类
+export default class DrawLabel {
   init(viewer) {
     this.viewer = viewer;
     this.initEvents();
     this.pointEntities = [];
+    this.labelEntities = [];
     this.positions = [];
     this.isActive = false;
   }
@@ -55,6 +57,10 @@ export default class DrawPoint {
       this.viewer.entities.remove(item);
     });
     this.pointEntities = [];
+    this.labelEntities.forEach(item => {
+      this.viewer.entities.remove(item);
+    })
+    this.labelEntities = [];
   }
 
   //创建点位
@@ -63,12 +69,47 @@ export default class DrawPoint {
       id: "point" + this.positions[this.positions.length - 1],
       position: this.positions[this.positions.length - 1],
       point: {
-        color: Cesium.Color.BLUE,
+        color: Cesium.Color.ANTIQUEWHITE,
         pixelSize: 10,
         disableDepthTestDistance: 500,
       }
     });
     this.pointEntities.push(entity);
+  }
+
+  //创建标签
+  createLabel(text) {
+    let label = this.viewer.entities.add({
+      position: this.positions[this.positions.length - 1],
+      label: {
+        text: text,
+        scale: 0.5,
+        font: 'normal 26px MicroSoft YaHei',
+        distanceDisplayCondition: new Cesium.DistanceDisplayCondition(0, 100000),
+        scaleByDistance: new Cesium.NearFarScalar(30, 2, 100000, 1),
+        verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+        style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+        pixelOffset: new Cesium.Cartesian2(0, -30),
+        outlineWidth: 9,
+        outlineColor: Cesium.Color.WHITE
+      }
+    });
+    this.labelEntities.push(label);
+  }
+
+  getLabelAndDraw() {
+    ElMessageBox.prompt('请输入标签内容', '提示', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+    }).then(({ value }) => {
+      this.createPoint();
+      this.createLabel(value);
+    }).catch(() => {
+      ElMessage({
+        type: 'info',
+        message: '取消输入'
+      });
+    });
   }
 
   //左键点击事件
@@ -82,7 +123,7 @@ export default class DrawPoint {
       }
       if (!position) return;
       this.positions.push(position);
-      this.createPoint();
+      this.getLabelAndDraw();
       this.deactivate();
     }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
   }

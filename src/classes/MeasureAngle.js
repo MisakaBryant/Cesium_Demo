@@ -1,16 +1,16 @@
 import * as Cesium from "cesium";
 
-//高度测量类
-export default class MeasureHeight {
+//测量方位角类
+export default class MeasureAngle {
   init(viewer) {
     this.viewer = viewer;
     this.initEvents();
     this.positions = [];
-    this.vertexEntities = [];
+    this.northPositions = [];
+    this.pointEntities = [];
     this.lineEntities = [];
-    this.circleEntities = [];
     this.labelEntities = [];
-    this.measureHeight = 0; //测量结果
+    this.measureAngle = 0; //测量结果
     this.isMeasure = false;
   }
 
@@ -51,29 +51,22 @@ export default class MeasureHeight {
     if (!this.isMeasure) return;
 
     //将结果全部固定
-    let firstPoint = this.vertexEntities[this.vertexEntities.length - 2];
-    firstPoint.position = this.positions[0];
-    let secondPoint = this.vertexEntities[this.vertexEntities.length - 1];
-    secondPoint.position = this.positions[1];
-    let line = this.lineEntities[this.lineEntities.length - 1];
-    line.polyline.positions = this.positions;
+    let point = this.pointEntities[this.pointEntities.length - 1]
+    point.position = this.positions[0];
+    let arrow = this.lineEntities[this.lineEntities.length - 2];
+    arrow.polyline.positions = this.positions;
+    let northLine = this.lineEntities[this.lineEntities.length - 1];
+    northLine.polyline.positions = this.northPositions;
     let label = this.labelEntities[this.labelEntities.length - 1];
-    label.position = this.positions[1];
-    label.text = "高度：" + this.measureHeight + " 米";
-    let circle = this.circleEntities[this.circleEntities.length - 1];
-    circle.position = this.positions[1];
-    circle.ellipse = {
-      height: Cesium.Cartographic.fromCartesian(this.positions[this.positions.length - 1]).height,
-      semiMinorAxis: this.circleRadius,
-      semiMajorAxis: this.circleRadius,
-      material: Cesium.Color.YELLOW.withAlpha(0.5),
-    }
+    label.position = this.positions[0];
+    label.label.text = "方位角：" + this.measureAngle.toFixed(2) + "°";
 
     this.unRegisterEvents();
     this.viewer._element.style.cursor = 'default';
     this.viewer.enableCursorStyle = true;
     this.isMeasure = false;
     this.positions = [];
+    this.northPositions = [];
   }
 
   //清空绘制
@@ -90,41 +83,65 @@ export default class MeasureHeight {
     });
     this.labelEntities = [];
 
-    //移除圆
-    this.circleEntities.forEach(item => {
+    //清除点
+    this.pointEntities.forEach(item => {
       this.viewer.entities.remove(item);
     });
-    this.circleEntities = [];
-
-    //清除节点
-    this.vertexEntities.forEach(item => {
-      this.viewer.entities.remove(item);
-    });
-    this.vertexEntities = [];
+    this.pointEntities = [];
   }
 
   //创建线对象
   createLineEntity() {
-    let line = this.viewer.entities.add({
+    //创建箭头
+    let arrow = this.viewer.entities.add({
       polyline: {
         positions: new Cesium.CallbackProperty(e => {
           return this.positions;
         }, false),
-        width: 2,
-        material: Cesium.Color.YELLOW,
+        width: 10,
+        material: new Cesium.PolylineArrowMaterialProperty(Cesium.Color.YELLOW),
         depthFailMaterial: new Cesium.PolylineDashMaterialProperty({
-          color: Cesium.Color.RED,
-        })
+          color: Cesium.Color.ORANGE,
+        }),
+        clampToGround: true,
       }
     });
-    this.lineEntities.push(line);
+    this.lineEntities.push(arrow);
+    //创建北向线
+    let northLine = this.viewer.entities.add({
+      polyline: {
+        positions: new Cesium.CallbackProperty(e => {
+          return this.northPositions;
+        }, false),
+        width: 2,
+        material: new Cesium.PolylineDashMaterialProperty({
+          color: Cesium.Color.RED,
+        }),
+        clampToGround: true,
+      }
+    });
+    this.lineEntities.push(northLine);
+  }
+
+  //创建点位
+  createPoint() {
+    let entity = this.viewer.entities.add({
+      id: "point" + this.positions[0],
+      position: this.positions[0],
+      point: {
+        color: Cesium.Color.GREEN,
+        pixelSize: 6,
+        disableDepthTestDistance: 500,
+      }
+    });
+    this.pointEntities.push(entity);
   }
 
   //创建结果文本标签
   createLabel() {
     let label = this.viewer.entities.add({
       position: new Cesium.CallbackProperty(e => {
-        return this.positions[this.positions.length - 1]; //返回最后一个点
+        return this.positions[0];
       }, false),
       label: {
         text: "",
@@ -140,42 +157,6 @@ export default class MeasureHeight {
       }
     });
     this.labelEntities.push(label);
-  }
-
-  //创建线节点
-  createVertex(index) {
-    let vertexEntity = this.viewer.entities.add({
-      position: new Cesium.CallbackProperty(e => {
-        return this.positions[index];
-      }, false), type: "MeasureHeightVertex", point: {
-        color: Cesium.Color.FUCHSIA,
-        pixelSize: 6,
-        //disableDepthTestDistance: 2000,
-      },
-    });
-    this.vertexEntities.push(vertexEntity);
-  }
-
-  //创建圆 这样方便看出水平面的高低
-  createCircleEntity() {
-    let circle = this.viewer.entities.add({
-      position: new Cesium.CallbackProperty(e => {
-        return this.positions[this.positions.length - 1]; //返回最后一个点
-      }, false),
-      ellipse: {
-        height: new Cesium.CallbackProperty(e => {
-          return Cesium.Cartographic.fromCartesian(this.positions[this.positions.length - 1]).height;
-        }, false),
-        semiMinorAxis: new Cesium.CallbackProperty(e => {
-          return this.circleRadius;
-        }, false),
-        semiMajorAxis: new Cesium.CallbackProperty(e => {
-          return this.circleRadius;
-        }, false),
-        material: Cesium.Color.YELLOW.withAlpha(0.5),
-      },
-    });
-    this.circleEntities.push(circle);
   }
 
   //注册鼠标事件
@@ -198,9 +179,9 @@ export default class MeasureHeight {
 
       if (this.positions.length === 0) { //首次点击
         this.positions.push(position);
-        this.createVertex(0);
+        this.northPositions.push(position);
+        this.createPoint();
         this.createLineEntity();
-        this.createCircleEntity();
         this.createLabel();
       } else { //第二次点击结束测量
         this.measureEnd();
@@ -227,18 +208,81 @@ export default class MeasureHeight {
     if (this.positions.length < 1) return;
     let firstPoint = Cesium.Cartographic.fromCartesian(this.positions[0]); //第一个点
     let movePoint = Cesium.Cartographic.fromCartesian(position); //鼠标移动点
-    const h = movePoint.height - firstPoint.height;
-    const secondPosition = Cesium.Cartesian3.fromDegrees(Cesium.Math.toDegrees(firstPoint.longitude), Cesium.Math.toDegrees(firstPoint.latitude), movePoint.height);
+    let len = Math.sqrt(Math.pow(movePoint.longitude - firstPoint.longitude, 2) + Math.pow(movePoint.latitude - firstPoint.latitude, 2));
+    let northPoint = Cesium.Cartographic.fromDegrees(
+      Cesium.Math.toDegrees(firstPoint.longitude),
+      Cesium.Math.toDegrees(firstPoint.latitude + len),
+      0
+    );  //北向点
+    let northPosition = Cesium.Cartesian3.fromDegrees(
+      Cesium.Math.toDegrees(firstPoint.longitude),
+      Cesium.Math.toDegrees(firstPoint.latitude + len),
+      0
+    );  //北向点笛卡尔位置
     if (this.positions.length < 2) {
-      this.positions.push(secondPosition);
-      this.createVertex(1);
+      this.positions.push(position);
+      this.northPositions.push(northPosition);
     } else {
-      this.positions[1] = secondPosition;
-      this.measureHeight = h.toFixed(3);
-      this.labelEntities[this.labelEntities.length - 1].label.text = "高度：" + this.measureHeight + " 米"
+      this.positions[1] = position;
+      this.northPositions[1] = northPosition;
+      this.measureAngle = this.courseAngle(northPoint.longitude, northPoint.latitude, movePoint.longitude, movePoint.latitude);
+      this.labelEntities[this.labelEntities.length - 1].label.text = "方位角：" + this.measureAngle.toFixed(2) + "°";
     }
-    //计算圆的半径
-    this.circleRadius = Cesium.Cartesian3.distance(secondPosition, position);
+  }
+
+  /**
+   * 计算两个点的方位角度
+   * @param lng_a
+   * @param lat_a
+   * @param lng_b
+   * @param lat_b
+   * @return {number}
+   */
+  courseAngle(lng_a, lat_a, lng_b, lat_b) {
+
+    //以a点为原点建立局部坐标系（东方向为y轴,北方向为x轴,垂直于地面为z轴），得到一个局部坐标到世界坐标转换的变换矩阵
+    // const localToWorld_Matrix = Cesium.Transforms.northEastDownToFixedFrame(
+    //     new Cesium.Cartesian3.fromDegrees(lng_a, lat_a)
+    // );
+
+    //以a点为原点建立局部坐标系（东方向为x轴,北方向为y轴,垂直于地面为z轴），得到一个局部坐标到世界坐标转换的变换矩阵
+    const localToWorld_Matrix = Cesium.Transforms.eastNorthUpToFixedFrame(
+      new Cesium.Cartesian3.fromDegrees(lng_a, lat_a)
+    );
+    //求世界坐标到局部坐标的变换矩阵
+    const worldToLocal_Matrix = Cesium.Matrix4.inverse(
+      localToWorld_Matrix,
+      new Cesium.Matrix4()
+    );
+    //a点在局部坐标的位置，其实就是局部坐标原点
+    const localPosition_A = Cesium.Matrix4.multiplyByPoint(
+      worldToLocal_Matrix,
+      new Cesium.Cartesian3.fromDegrees(lng_a, lat_a),
+      new Cesium.Cartesian3()
+    );
+    //B点在以A点为原点的局部的坐标位置
+    const localPosition_B = Cesium.Matrix4.multiplyByPoint(
+      worldToLocal_Matrix,
+      new Cesium.Cartesian3.fromDegrees(lng_b, lat_b),
+      new Cesium.Cartesian3()
+    );
+
+    //弧度
+    // const angle = Math.atan2(
+    //     localPosition_B.y - localPosition_A.y,
+    //     localPosition_B.x - localPosition_A.x
+    // );
+    //弧度
+    const angle = Math.atan2(
+      localPosition_B.x - localPosition_A.x,
+      localPosition_B.y - localPosition_A.y
+    );
+    //角度
+    let theta = angle * (180 / Math.PI);
+    if (theta < 0) {
+      theta = theta + 360;
+    }
+    return theta;
   }
 
   //右键事件
@@ -263,4 +307,5 @@ export default class MeasureHeight {
     this.handler.removeInputAction(Cesium.ScreenSpaceEventType.LEFT_CLICK);
     this.handler.removeInputAction(Cesium.ScreenSpaceEventType.MOUSE_MOVE);
   }
+
 }
