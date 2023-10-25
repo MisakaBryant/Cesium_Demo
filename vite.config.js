@@ -25,5 +25,6 @@ export default defineConfig({
                 rewrite: (path) => path.replace(/^\/api/, ''), //路径重写规则
             }
         }
-    }
+    },
+    base: '/Cesium_Demo/',
 })
