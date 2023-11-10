@@ -13,6 +13,7 @@ import DrawLabel from "./classes/DrawLabel.js";
 import MeasureAngle from "./classes/MeasureAngle.js";
 import RainEffect from "./filters/rain.js";
 import SnowEffect from "./filters/snow.js";
+import MeasureView from "./classes/MeasureView.js";
 
 // import {CGCS2000ToWGS84} from "./classes/CGCS2000toWGS84.js";
 
@@ -25,10 +26,16 @@ const measureArea = reactive(new MeasureArea()) // 测量面积工具
 const measureAltitude = reactive(new MeasureAltitude()) // 测量海拔工具
 const measureDistanceFitTerrain = reactive(new MeasureDistanceFitTerrain()) // 贴地距离工具
 const measureAngle = reactive(new MeasureAngle()) // 测量角度工具
+const measureView = reactive(new MeasureView()) // 测量视距工具
+const showContour = ref(false) //是否显示等高线
 const showMeasureResult = ref(true)  //是否显示测量结果
 const drawPoint = reactive(new DrawPoint()) //绘制点工具
 const drawLine = reactive(new DrawLine()) //绘制线工具
 const drawLabel = reactive(new DrawLabel()) //绘制标签工具
+
+var arrViewField = [];
+var viewModel = { verticalAngle: 90, horizontalAngle: 120, distance: 10 };
+console.log(Cesium.VERSION)
 
 const rainEffect = reactive(new RainEffect({
     tiltAngle: -0.2, // 雨滴倾斜角度
@@ -80,18 +87,11 @@ onMounted(() => {
         infoBox: false,           //不显示信息框
     });
 
+    viewer._cesiumWidget._creditContainer.style.display = 'none';
+
     viewer.imageryLayers.addImageryProvider(osmLayer);
 
     viewer.scene.globe.depthTestAgainstTerrain = true;  //开启深度检测，解决pickPosition不准确问题
-
-    viewer.scene.camera.setView({
-        destination: Cesium.Cartesian3.fromDegrees(118.775907, 32.039101, 2000),
-        orientation: {
-            heading: 0.0,
-            pitch: Cesium.Math.toRadians(-45),  //设置相机俯仰角度
-            roll: 0.0
-        }
-    })
 
     // 地形
     viewer.terrainProvider = Cesium.createWorldTerrain({
@@ -133,6 +133,29 @@ onMounted(() => {
             ]
         }
     })
+
+    viewer.terrainProvider.readyPromise.then(()=>
+        viewer.scene.camera.flyTo({
+            destination: Cesium.Cartesian3.fromDegrees(118.775907, 32.039101, 12000),
+            orientation: {
+                heading: 0.0,
+                pitch: Cesium.Math.toRadians(0),  //设置相机俯仰角度
+                roll: 0.0
+            },
+            duration: 8,
+            complete: function () {
+                viewer.scene.camera.flyTo({
+                    destination: Cesium.Cartesian3.fromDegrees(118.775907, 32.039101, 2000),
+                    orientation: {
+                        heading: 0.0,
+                        pitch: Cesium.Math.toRadians(-45),  //设置相机俯仰角度
+                        roll: 0.0
+                    },
+                    duration: 5,
+                })
+            }
+        })
+    )
 
     //加载GeoJson数据
     /*  var CommunityPromise = Cesium.GeoJsonDataSource.load('https://geo.datav.aliyun.com/areas_v3/bound/geojson?code=320100_full');
@@ -186,6 +209,7 @@ onMounted(() => {
     measureAltitude.init(viewer);
     measureDistanceFitTerrain.init(viewer);
     measureAngle.init(viewer);
+    measureView.init(viewer);
     drawPoint.init(viewer);
     drawLine.init(viewer);
     drawLabel.init(viewer);
@@ -214,6 +238,7 @@ function clearMeasure() {
     measureAltitude.clear();
     measureDistanceFitTerrain.clear();
     measureAngle.clear();
+    measureView.clear();
 }
 
 function activateMeasureArea() {
@@ -226,6 +251,52 @@ function activateMeasureDistanceFitTerrain() {
 
 function activateMeasureAngle() {
     measureAngle.activate();
+}
+
+function activateMeasureView() {
+    measureView.activate();
+}
+
+// 添加可视域
+function addViewField() {
+    import('./classes/private/cesium-viewshed.js').then((module)=>{
+        var e = new module.ViewShed3D(viewer, {
+            horizontalAngle: Number(viewModel.horizontalAngle),
+            verticalAngle: Number(viewModel.verticalAngle),
+            distance: Number(viewModel.distance),
+            calback: function () {
+                viewModel.distance = e.distance
+            }
+        });
+        arrViewField.push(e)
+    })
+
+}
+// 清除可视域
+function clearAllViewField() {
+    for (var e = 0, i = arrViewField.length; e < i; e++) {
+        arrViewField[e].destroy()
+    }
+    arrViewField = []
+}
+
+function showOrHideContour(showContour) {
+    if (showContour) {
+        let contourUniforms = {};
+        // 使用等高线材质
+        let material = Cesium.Material.fromType("ElevationContour");
+        contourUniforms = material.uniforms;
+        // 线宽2.0px
+        contourUniforms.width = 2.0;
+        // 高度间隔为100米
+        contourUniforms.spacing = 150;
+
+        contourUniforms.color = Cesium.Color.AQUAMARINE;
+
+        viewer.scene.globe.material = material;
+    } else {
+        viewer.scene.globe.material = null;
+    }
 }
 
 function showOrHideMeasureResult(showMeasureResult) {
@@ -268,7 +339,7 @@ function clearDraw() {
     <div>
         <el-container height="100%">
             <el-main>
-                <el-space id="MeasureBar">
+                <el-space id="MeasureBar1">
                     <el-button type="primary" :disabled="measureDistance.isMeasure" round color="#303336"
                                @click="activateMeasureDistance()">
                         测量距离
@@ -285,6 +356,11 @@ function clearDraw() {
                                @click="activateMeasureAltitude()">
                         测量海拔
                     </el-button>
+                    <el-switch v-model="showContour" style="--el-switch-on-color: #303336; --el-switch-off-color: #6e7072; --el-margin-left: 5%;"
+                               inline-prompt active-text="显示等高线" inactive-text="隐藏等高线" size="large"
+                               @change="showOrHideContour(showContour)"></el-switch>
+                </el-space>
+                <el-space id="MeasureBar2">
                     <el-button type="primary" :disabled="measureArea.isMeasure" round color="#303336"
                                @click="activateMeasureArea()">
                         测量面积
@@ -293,12 +369,15 @@ function clearDraw() {
                                @click="activateMeasureAngle()">
                         测量角度
                     </el-button>
+                    <el-button type="primary" :disabled="measureView.isMeasure" round color="#303336"
+                               @click="addViewField()">
+                        可视角分析
+                    </el-button>
                     <el-button type="primary" round color="#303336" @click="clearMeasure()">清除测量</el-button>
                     <el-switch v-model="showMeasureResult" style="--el-switch-on-color: #303336; --el-switch-off-color: #6e7072; --el-margin-left: 5%;"
                                inline-prompt active-text="显示测量结果" inactive-text="隐藏测量结果" size="large"
                                @change="showOrHideMeasureResult(showMeasureResult)"></el-switch>
                 </el-space>
-
                 <el-space id="DrawBar">
                     <el-button type="primary" :disabled="drawPoint.active" round color="#303336"
                                @click="activeDrawPoint()">
@@ -356,7 +435,7 @@ function clearDraw() {
 </template>
 
 <style>
-#MeasureBar {
+#MeasureBar1 {
     position: absolute;
     top: 10px;
     left: 10px;
@@ -365,9 +444,18 @@ function clearDraw() {
     z-index: 999;
 }
 
-#DrawBar {
+#MeasureBar2 {
     position: absolute;
     top: 60px;
+    left: 10px;
+    height: auto;
+    width: auto;
+    z-index: 999;
+}
+
+#DrawBar {
+    position: absolute;
+    top: 110px;
     left: 10px;
     height: auto;
     width: auto;
@@ -384,7 +472,7 @@ function clearDraw() {
 
 #menu {
     position: absolute;
-    top: 110px;
+    top: 160px;
     left: 10px;
     height: auto;
     width: auto;
