@@ -1,10 +1,9 @@
-/*
- * @description:下雨效果，参考简书上的代码
- * @date：2022-01-20
- */
-
 import * as Cesium from "cesium";
 
+/**
+ * @description 下雨效果，参考简书上的代码
+ * @date 2022-01-20
+ */
 export default class RainEffect {
     constructor(options) {
         options = options || {};

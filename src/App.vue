@@ -49,6 +49,9 @@ const snowEffect = reactive(new SnowEffect({
 })) //雪花特效
 const snow = ref(false) //是否开启雪天
 
+const osmLayerAlpha = ref(1.0) //osm街道图层透明度
+const osmBlack = ref(0.0) //黑色图层透明度
+
 onMounted(() => {
     //arcgis街道图层，基于wgs84坐标系，但国内地区精度不高
     var custom = new Cesium.ArcGisMapServerImageryProvider({
@@ -59,10 +62,6 @@ onMounted(() => {
         url: "https://tile-{s}.openstreetmap.fr/hot/{z}/{x}/{y}.png",
         subdomains: ["a", "b", "c"],
     })
-    const osm = new Cesium.OpenStreetMapImageryProvider({
-        url : 'https://tile.openstreetmap.org/'
-    });
-    var osmL = new Cesium.ImageryLayer(osm);
 
     var osmBlack = new Cesium.UrlTemplateImageryProvider({
         url: "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png ",
@@ -90,6 +89,8 @@ onMounted(() => {
     viewer._cesiumWidget._creditContainer.style.display = 'none';
 
     viewer.imageryLayers.addImageryProvider(osmLayer);
+    osmBlack.defaultAlpha = 0.0;
+    viewer.imageryLayers.addImageryProvider(osmBlack);
 
     viewer.scene.globe.depthTestAgainstTerrain = true;  //开启深度检测，解决pickPosition不准确问题
 
@@ -282,7 +283,7 @@ function clearAllViewField() {
 
 function showOrHideContour(showContour) {
     if (showContour) {
-        let contourUniforms = {};
+        let contourUniforms;
         // 使用等高线材质
         let material = Cesium.Material.fromType("ElevationContour");
         contourUniforms = material.uniforms;
@@ -297,6 +298,11 @@ function showOrHideContour(showContour) {
     } else {
         viewer.scene.globe.material = null;
     }
+}
+
+function changeOsmAlpha(alpha) {
+    let layer = viewer.imageryLayers.get(1);    //获取osm街道图层
+    layer.alpha = alpha;
 }
 
 function showOrHideMeasureResult(showMeasureResult) {
@@ -356,7 +362,7 @@ function clearDraw() {
                                @click="activateMeasureAltitude()">
                         测量海拔
                     </el-button>
-                    <el-switch v-model="showContour" style="--el-switch-on-color: #303336; --el-switch-off-color: #6e7072; --el-margin-left: 5%;"
+                    <el-switch v-model="showContour" style="--el-switch-on-color: #303336; --el-switch-off-color: #6e7072;"
                                inline-prompt active-text="显示等高线" inactive-text="隐藏等高线" size="large"
                                @change="showOrHideContour(showContour)"></el-switch>
                 </el-space>
@@ -374,7 +380,7 @@ function clearDraw() {
                         可视角分析
                     </el-button>
                     <el-button type="primary" round color="#303336" @click="clearMeasure()">清除测量</el-button>
-                    <el-switch v-model="showMeasureResult" style="--el-switch-on-color: #303336; --el-switch-off-color: #6e7072; --el-margin-left: 5%;"
+                    <el-switch v-model="showMeasureResult" style="--el-switch-on-color: #303336; --el-switch-off-color: #6e7072;"
                                inline-prompt active-text="显示测量结果" inactive-text="隐藏测量结果" size="large"
                                @change="showOrHideMeasureResult(showMeasureResult)"></el-switch>
                 </el-space>
@@ -404,24 +410,28 @@ function clearDraw() {
                                 <el-icon><Operation color="#ffffff" /></el-icon>
                             </template>
                             <el-menu-item-group title="图层设置">
-                                <el-menu-item index="1-1">item one</el-menu-item>
+                                <el-menu-item index="1-1">
+                                    <el-text style="color: #ffffff;">街道</el-text>
+                                    <el-slider v-model="osmLayerAlpha" size="small" :min="0" :max="1" :step="0.01" style="margin-left: 10%; --el-slider-button-size: 40%; --el-slider-main-bg-color: #595c5e; "
+                                               @change="changeOsmAlpha(osmLayerAlpha)" />
+                                </el-menu-item>
                                 <el-menu-item index="1-2">item two</el-menu-item>
                             </el-menu-item-group>
                             <el-menu-item-group title="显示设置">
                                 <el-menu-item index="1-3">
                                     <el-text style="color: #ffffff;">雨天</el-text>
                                     <el-icon><Pouring color="#ffffff" /></el-icon>
-                                    <el-switch v-model="rain" style="--el-switch-on-color: #303336; --el-switch-off-color: #6e7072; --el-margin-left: 5%;"
+                                    <el-switch v-model="rain" style="--el-switch-on-color: #595c5e; --el-switch-off-color: #6e7072;"
                                                @change="rainEffect.show(rain)"></el-switch>
                                 </el-menu-item>
                                 <el-menu-item index="1-4">
                                     <el-text style="color: #ffffff;">雪天</el-text>
                                     <el-icon><Drizzling color="#ffffff" /></el-icon>
-                                    <el-switch v-model="snow" style="--el-switch-on-color: #303336; --el-switch-off-color: #6e7072; --el-margin-left: 5%;"
+                                    <el-switch v-model="snow" style="--el-switch-on-color: #595c5e; --el-switch-off-color: #6e7072;"
                                                @change="snowEffect.show(snow)"></el-switch>
                                 </el-menu-item>
                             </el-menu-item-group>
-                        </el-sub-menu>
+                                </el-sub-menu>
                         <el-menu-item index="2">
                             <el-icon><Menu color="#ffffff" /></el-icon>
                         </el-menu-item>

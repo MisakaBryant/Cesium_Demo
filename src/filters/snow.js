@@ -1,10 +1,9 @@
-/**
- * @description:下雪效果，参考简书代码
- * @date：2022-01-20
- */
-
 import * as Cesium from "cesium";
 
+/**
+ * @description 下雪效果，参考简书代码
+ * @date 2022-01-20
+ */
 export default class SnowEffect {
   constructor(options) {
     options = options || {};

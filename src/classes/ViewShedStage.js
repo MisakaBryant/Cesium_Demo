@@ -1,7 +1,7 @@
 // ViewShed.js
 
 import * as Cesium from "cesium";
-import glsl from "./shader/viewerShader.js";
+import glsl from "./private/viewerShader.js";
 
 /**
  * 可视域分析。

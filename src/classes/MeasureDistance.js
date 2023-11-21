@@ -89,7 +89,7 @@ export default class MeasureDistance {
   createLineEntity() {
     this.lineEntity = this.viewer.entities.add({
       polyline: {
-        positions: new Cesium.CallbackProperty(e => {
+        positions: new Cesium.CallbackProperty(e=> {
           return this.tempPositions;
         }, false),
         width: 2,

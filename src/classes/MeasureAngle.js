@@ -43,7 +43,6 @@ export default class MeasureAngle {
     this.viewer.enableCursorStyle = false;
     this.viewer._element.style.cursor = 'default';
     this.isMeasure = true;
-    this.circleRadius = 0.1;
   }
 
   //禁用
@@ -268,11 +267,6 @@ export default class MeasureAngle {
     );
 
     //弧度
-    // const angle = Math.atan2(
-    //     localPosition_B.y - localPosition_A.y,
-    //     localPosition_B.x - localPosition_A.x
-    // );
-    //弧度
     const angle = Math.atan2(
       localPosition_B.x - localPosition_A.x,
       localPosition_B.y - localPosition_A.y
@@ -290,7 +284,6 @@ export default class MeasureAngle {
     this.handler.setInputAction(e => {
       if (this.isMeasure) {
         this.deactivate();
-        this.clear();
       }
     }, Cesium.ScreenSpaceEventType.RIGHT_CLICK);
   }
