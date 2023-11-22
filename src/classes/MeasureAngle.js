@@ -208,11 +208,12 @@ export default class MeasureAngle {
     let firstPoint = Cesium.Cartographic.fromCartesian(this.positions[0]); //第一个点
     let movePoint = Cesium.Cartographic.fromCartesian(position); //鼠标移动点
     let len = Math.sqrt(Math.pow(movePoint.longitude - firstPoint.longitude, 2) + Math.pow(movePoint.latitude - firstPoint.latitude, 2));
-    let northPoint = Cesium.Cartographic.fromDegrees(
+    Cesium.Cartographic.fromDegrees(
       Cesium.Math.toDegrees(firstPoint.longitude),
       Cesium.Math.toDegrees(firstPoint.latitude + len),
       0
-    );  //北向点
+    );
+    //北向点
     let northPosition = Cesium.Cartesian3.fromDegrees(
       Cesium.Math.toDegrees(firstPoint.longitude),
       Cesium.Math.toDegrees(firstPoint.latitude + len),
@@ -224,7 +225,7 @@ export default class MeasureAngle {
     } else {
       this.positions[1] = position;
       this.northPositions[1] = northPosition;
-      this.measureAngle = this.courseAngle(northPoint.longitude, northPoint.latitude, movePoint.longitude, movePoint.latitude);
+      this.measureAngle = this.courseAngle(firstPoint.longitude, firstPoint.latitude, movePoint.longitude, movePoint.latitude);
       this.labelEntities[this.labelEntities.length - 1].label.text = "方位角：" + this.measureAngle.toFixed(2) + "°";
     }
   }
@@ -291,7 +292,7 @@ export default class MeasureAngle {
   //测量结束
   measureEnd() {
     this.deactivate();
-    this.MeasureEndEvent.raiseEvent(this.measureHeight); //触发结束事件 传入结果
+    this.MeasureEndEvent.raiseEvent(this.measureAngle); //触发结束事件 传入结果
   }
 
   //解除鼠标事件

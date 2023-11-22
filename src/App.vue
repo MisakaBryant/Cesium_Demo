@@ -375,10 +375,10 @@ function clearDraw() {
                                @click="activateMeasureAngle()">
                         测量角度
                     </el-button>
-                    <el-button type="primary" :disabled="measureView.isMeasure" round color="#303336"
-                               @click="activateMeasureView()">
-                        可视角分析
-                    </el-button>
+<!--                    <el-button type="primary" :disabled="measureView.isMeasure" round color="#303336"-->
+<!--                               @click="activateMeasureView()">-->
+<!--                        可视角分析-->
+<!--                    </el-button>-->
                     <el-button type="primary" round color="#303336" @click="clearMeasure()">清除测量</el-button>
                     <el-switch v-model="showMeasureResult" style="--el-switch-on-color: #303336; --el-switch-off-color: #6e7072;"
                                inline-prompt active-text="显示测量结果" inactive-text="隐藏测量结果" size="large"
