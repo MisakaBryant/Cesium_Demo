@@ -89,7 +89,7 @@ export default class MeasureDistance {
   createLineEntity() {
     this.lineEntity = this.viewer.entities.add({
       polyline: {
-        positions: new Cesium.CallbackProperty(e => {
+        positions: new Cesium.CallbackProperty(e=> {
           return this.tempPositions;
         }, false),
         width: 2,
@@ -262,7 +262,6 @@ export default class MeasureDistance {
     this.handler.setInputAction(e => {
       if (!this.isMeasure || this.positions.length < 1) {
         this.deactivate();
-        this.clear();
       } else {
         this.createEndEntity();
         this.lineEntity.polyline = {

@@ -1,5 +1,4 @@
 import * as Cesium from "cesium";
-import {Cartesian3} from "cesium";
 
 //距离测量类
 export default class MeasureDistanceFitTerrain {
@@ -10,7 +9,7 @@ export default class MeasureDistanceFitTerrain {
     this.tempPositions = [];    //存储点位
     this.vertexEntities = [];   //存储点位实体
     this.lineEntities = [];     //存储线实体
-    this.labelEntities = [];
+    this.labelEntities = [];  //存储标签实体
     this.measureDistance = 0; //测量结果
     this.isMeasure = false;
   }
@@ -80,6 +79,10 @@ export default class MeasureDistanceFitTerrain {
       this.viewer.entities.remove(item);
     });
     this.vertexEntities = [];
+    this.labelEntities.forEach(item => {
+      this.viewer.entities.remove(item);
+    });
+    this.labelEntities = [];
   }
 
   //创建线对象
@@ -100,11 +103,11 @@ export default class MeasureDistanceFitTerrain {
   //创建线节点
   createVertex(pos) {
     this.measureDistance = this.spaceDistance(this.positions);
-    let vertexEntity = this.viewer.entities.add({
+    let resultLabel = this.viewer.entities.add({
       // position: this.positions[this.positions.length - 1],
       position: pos,
-      id: "MeasureDistanceVertex" + this.positions[this.positions.length - 1],
-      type: "MeasureDistanceVertex",
+      id: "MeasureDistanceFitTerrainVertex" + this.positions[this.positions.length - 1],
+      type: "MeasureDistanceFitTerrainVertex",
       label: {
         text: this.measureDistance + "米",
         scale: 0.5,
@@ -117,26 +120,37 @@ export default class MeasureDistanceFitTerrain {
         outlineWidth: 9,
         outlineColor: Cesium.Color.WHITE
       },
+    });
+    this.labelEntities.push(resultLabel);
+    let vertexEntity = this.viewer.entities.add({
+      position: pos,
+      id: "MeasureDistanceFitTerrainVertex" + this.positions[this.positions.length - 1],
+      type: "MeasureDistanceFitTerrainVertex",
       point: {
         color: Cesium.Color.FUCHSIA,
         pixelSize: 8,
         disableDepthTestDistance: 500,
       },
-    });
+    })
     this.vertexEntities.push(vertexEntity);
   }
 
   //创建起点
   createStartEntity() {
-    let vertexEntity = this.viewer.entities.add({
+    let resultLabel = this.viewer.entities.add({
       position: this.positions[0],
-      type: "MeasureDistanceVertex",
+      type: "MeasureDistanceFitTerrainLabel",
       billboard: {
         image: "../pic/point.png",
         scaleByDistance: new Cesium.NearFarScalar(30, 0.3, 100000, 0.1), //设置随图缩放距离和比例
         distanceDisplayCondition: new Cesium.DistanceDisplayCondition(0, 100000), //设置可见距离 10000米可见
         verticalOrigin: Cesium.VerticalOrigin.BOTTOM
-      },
+      }
+    });
+    this.labelEntities.push(resultLabel);
+    let vertexEntity = this.viewer.entities.add({
+      position: this.positions[0],
+      type: "MeasureDistanceFitTerrainVertex",
       point: {
         color: Cesium.Color.FUCHSIA,
         pixelSize: 6,
@@ -148,15 +162,16 @@ export default class MeasureDistanceFitTerrain {
   //创建终点节点
   createEndEntity() {
     //结束时删除最后一个节点的距离标识
-    let lastLabel = this.viewer.entities.getById("MeasureDistanceVertex" + this.positions[this.positions.length - 1]);
+    let lastVertex = this.vertexEntities.pop();
+    this.viewer.entities.remove(lastVertex);
+    let lastLabel = this.labelEntities.pop();
     this.viewer.entities.remove(lastLabel);
-    this.viewer.entities.remove(this.moveVertexEntity);
 
     this.measureDistance = this.spaceDistance(this.positions);
 
-    let vertexEntity = this.viewer.entities.add({
+    let resultLabel = this.viewer.entities.add({
       position: this.positions[this.positions.length - 1],
-      type: "MeasureDistanceVertex",
+      type: "MeasureDistanceFitTerrainLabel",
       label: {
         text: "总距离：" + this.measureDistance + "米",
         scale: 0.5,
@@ -176,11 +191,16 @@ export default class MeasureDistanceFitTerrain {
         distanceDisplayCondition: new Cesium.DistanceDisplayCondition(0, 100000), //设置可见距离 10000米可见
         verticalOrigin: Cesium.VerticalOrigin.BOTTOM
       },
+    });
+    this.labelEntities.push(resultLabel);
+    let vertexEntity = this.viewer.entities.add({
+      position: this.positions[this.positions.length - 1],
+      type: "MeasureDistanceFitTerrainVertex",
       point: {
         color: Cesium.Color.FUCHSIA,
         pixelSize: 6,
       },
-    });
+    })
     this.vertexEntities.push(vertexEntity);
   }
 
@@ -308,7 +328,6 @@ export default class MeasureDistanceFitTerrain {
     this.handler.setInputAction(e => {
       if (!this.isMeasure || this.positions.length < 1) {
         this.deactivate();
-        this.clear();
       } else {
         this.createEndEntity();
         this.lineEntity.polyline = {
