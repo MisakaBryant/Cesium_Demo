@@ -376,7 +376,7 @@ function clearDraw() {
                         测量角度
                     </el-button>
                     <el-button type="primary" :disabled="measureView.isMeasure" round color="#303336"
-                               @click="addViewField()">
+                               @click="activateMeasureView()">
                         可视角分析
                     </el-button>
                     <el-button type="primary" round color="#303336" @click="clearMeasure()">清除测量</el-button>
