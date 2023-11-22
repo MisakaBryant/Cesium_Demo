@@ -5,17 +5,22 @@ export default class MeasureArea {
     init(viewer) {
         this.viewer = viewer;
         this.entityCollection = [];
+        this.labelEntities = [];
         this.isMeasure = false;
     }
 
     //显示测量结果
     showMeasureResult() {
-        this.viewer.entities.add(this.lablEntity);
+        this.labelEntities.forEach(item => {
+            this.viewer.entities.add(item);
+        })
     }
 
     //隐藏测量结果
     hideMeasureResult() {
-        this.viewer.entities.remove(item);
+        this.labelEntities.forEach(item => {
+            this.viewer.entities.remove(item);
+        })
     }
 
     measurePolygon() {
@@ -56,14 +61,15 @@ export default class MeasureArea {
                         // 绘制label
                         if (labelEntity) {
                             this.viewer.entities.remove(labelEntity);
-                            this.entityCollection.splice(this.entityCollection.indexOf(labelEntity), 1);
+                            this.labelEntities.splice(this.labelEntities.indexOf(labelEntity), 1);
                         }
 
                         var text = "面积：" + this.getArea(positions);
                         var centerPoint = this.getCenterOfGravityPoint(positions);
                         labelEntity = this.addLabel(centerPoint, text);
 
-                        this.entityCollection.push(labelEntity);
+                        this.labelEntities.push(labelEntity);
+                        // this.entityCollection.push(labelEntity);
                     }
                     clickStatus = false;
                 }, Cesium.ScreenSpaceEventType.MOUSE_MOVE);
@@ -71,7 +77,7 @@ export default class MeasureArea {
 
             } else if (positions.length === 2) {
                 if (!cartesian) {
-                    return false
+                    return false;
                 }
                 positions.pop();
                 positions.push(cartesian.clone()); // 鼠标左击 添加第2个点
@@ -117,6 +123,10 @@ export default class MeasureArea {
         this.entityCollection.forEach(entity => {
             this.viewer.entities.remove(entity);
         });
+        this.labelEntities.forEach(entity => {
+            this.viewer.entities.remove(entity);
+        });
+        this.labelEntities = [];
         this.entityCollection = [];
     }
     // 添加点
@@ -235,7 +245,7 @@ export default class MeasureArea {
         return s;
     }
     //计算多边形面积
-    getArea(points) {
+       getArea(points) {
         var res = 0;
         //拆分三角曲面
 

@@ -11,6 +11,8 @@ import DrawLine from "./classes/DrawLine.js";
 import MeasureAltitude from "./classes/MeasureAltitude.js";
 import DrawLabel from "./classes/DrawLabel.js";
 import MeasureAngle from "./classes/MeasureAngle.js";
+import SearchRoute from "./classes/searchRoute.js";
+
 // import {CGCS2000ToWGS84} from "./classes/CGCS2000toWGS84.js";
 
 Cesium.Ion.defaultAccessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJmM2U1YjYxYS1lNzczLTRlMjQtODEyYi03MjJmNjQyOTQzOWYiLCJpZCI6MTMwNjk3LCJpYXQiOjE2Nzk4OTg4MTd9.vTMp7xouXgtGhI3yV4rHa86YV1bopfqmVJcrbttFODU"
@@ -22,10 +24,12 @@ const measureArea = reactive(new MeasureArea()) // 测量面积工具
 const measureAltitude = reactive(new MeasureAltitude()) // 测量海拔工具
 const measureDistanceFitTerrain = reactive(new MeasureDistanceFitTerrain()) // 贴地距离工具
 const measureAngle = reactive(new MeasureAngle()) // 测量角度工具
+
 const showMeasureResult = ref(true)  //是否显示测量结果
 const drawPoint = reactive(new DrawPoint()) //绘制点工具
 const drawLine = reactive(new DrawLine()) //绘制线工具
 const drawLabel = reactive(new DrawLabel()) //绘制标签工具
+const searchRoute = reactive(new SearchRoute()) //路径规划工具
 
 const requestWaterMask = ref(true) //是否请求水面特效
 const requestVertexNormals = ref(true) //是否请求地形照明
@@ -87,30 +91,33 @@ onMounted(() => {
     // var ellipsoidProvider = new Cesium.EllipsoidTerrainProvider();
     // viewer.terrainProvider = ellipsoidProvider;
 
+    // TODO: 代理
     // 建筑模型
-    var city = viewer.scene.primitives.add(new Cesium.Cesium3DTileset(
-        {
-            // url: Cesium.IonResource.fromAssetId(75343)
-            // url: Cesium.IonResource.fromAssetId(1642792)
-            url: "./3dtiles/tileset.json"
-            // url: "../3dtiles/tileset.json"
-        }
-    ))
+    // var city = viewer.scene.primitives.add(new Cesium.Cesium3DTileset(
+    //     {
+    //         // url: Cesium.IonResource.fromAssetId(75343)
+    //         // url: Cesium.IonResource.fromAssetId(1642792)
+    //         url: "api/Cesium_Demo/3dtiles/tileset.json"
+    //         // url: "./3dtiles/tileset.json"
+    //     }
+    // ))
 
-    city.style = new Cesium.Cesium3DTileStyle({
-        color: {
-            conditions: [
-                ["${Elevation} >= 200", "rgb(45, 0, 75)"],
-                ["${Elevation} >= 150", "rgb(102, 71, 151)"],
-                ["${Elevation} >= 100", "rgb(170, 162, 204)"],
-                ["${Elevation} >= 60", "rgb(224, 226, 238)"],
-                ["${Elevation} >= 30", "rgb(252, 230, 200)"],
-                ["${Elevation} >= 10", "rgb(248, 176, 87)"],
-                ["${Elevation} >= 5", "rgb(198, 106, 11)"],
-                ["true", "rgb(127, 59, 8)"]
-            ]
-        }
-    })
+    // city.style = new Cesium.Cesium3DTileStyle({
+    //     color: {
+    //         conditions: [
+    //             ["${Elevation} >= 200", "rgb(45, 0, 75)"],
+    //             ["${Elevation} >= 150", "rgb(102, 71, 151)"],
+    //             ["${Elevation} >= 100", "rgb(170, 162, 204)"],
+    //             ["${Elevation} >= 60", "rgb(224, 226, 238)"],
+    //             ["${Elevation} >= 30", "rgb(252, 230, 200)"],
+    //             ["${Elevation} >= 10", "rgb(248, 176, 87)"],
+    //             ["${Elevation} >= 5", "rgb(198, 106, 11)"],
+    //             ["true", "rgb(127, 59, 8)"]
+    //         ]
+    //     }
+    // })
+
+
     // viewer.zoomTo(city);
     //加载GeoJson数据
     /*  var CommunityPromise = Cesium.GeoJsonDataSource.load('https://geo.datav.aliyun.com/areas_v3/bound/geojson?code=320100_full');
@@ -167,6 +174,7 @@ onMounted(() => {
     drawPoint.init(viewer);
     drawLine.init(viewer);
     drawLabel.init(viewer);
+    searchRoute.init(viewer);
 })
 
 function activateMeasureDistance() {
@@ -202,6 +210,12 @@ function activateMeasureAngle() {
     measureAngle.activate();
 }
 
+function activateSearchRoute() {
+    searchRoute.search();
+}
+
+
+
 function showOrHideMeasureResult(showMeasureResult) {
     if (showMeasureResult) {
         measureDistance.showMeasureResult();
@@ -209,12 +223,14 @@ function showOrHideMeasureResult(showMeasureResult) {
         measureHeight.showMeasureResult();
         measureAltitude.showMeasureResult();
         measureAngle.showMeasureResult();
+        measureArea.showMeasureResult();
     } else {
         measureDistance.hideMeasureResult();
         measureDistanceFitTerrain.hideMeasureResult();
         measureHeight.hideMeasureResult();
         measureAltitude.hideMeasureResult();
         measureAngle.hideMeasureResult();
+        measureArea.hideMeasureResult();
     }
 }
 
@@ -263,6 +279,10 @@ function clearDraw() {
                     <el-button type="primary" :disabled="measureAngle.isMeasure" round @click="activateMeasureAngle()">
                         测量角度
                     </el-button>
+                    <el-button type="primary" :disabled="searchRoute.isMeasure" round @click="activateSearchRoute()">
+                        路径规划
+                    </el-button>
+
                     <el-button type="primary" round @click="clearMeasure()">清除测量</el-button>
                     <el-switch v-model="showMeasureResult" style="--el-switch-on-color: #419fff; --el-switch-off-color: #ff4949; --el-margin-left: 5%;"
                                inline-prompt active-text="显示测量结果" inactive-text="隐藏测量结果" size="large"
