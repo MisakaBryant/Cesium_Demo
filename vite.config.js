@@ -19,7 +19,7 @@ export default defineConfig({
         base: './',
         proxy: {
             '/api': {
-                target: 'http://172.17.196.196:5125/', // 代理目标地址
+                target: 'http://192.168.1.107:5125/', // 代理目标地址
                 ws: true,  // 是否开启websocket支持
                 changeOrigin: true, // 是否允许跨域
                 rewrite: (path) => path.replace(/^\/api/, ''), //路径重写规则

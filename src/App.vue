@@ -15,6 +15,8 @@ import RainEffect from "./filters/rain.js";
 import SnowEffect from "./filters/snow.js";
 import MeasureView from "./classes/MeasureView.js";
 
+import SearchRoute from "./classes/searchRoute.js";
+
 // import {CGCS2000ToWGS84} from "./classes/CGCS2000toWGS84.js";
 
 Cesium.Ion.defaultAccessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJmM2U1YjYxYS1lNzczLTRlMjQtODEyYi03MjJmNjQyOTQzOWYiLCJpZCI6MTMwNjk3LCJpYXQiOjE2Nzk4OTg4MTd9.vTMp7xouXgtGhI3yV4rHa86YV1bopfqmVJcrbttFODU"
@@ -28,10 +30,12 @@ const measureDistanceFitTerrain = reactive(new MeasureDistanceFitTerrain()) // �
 const measureAngle = reactive(new MeasureAngle()) // 测量角度工具
 const measureView = reactive(new MeasureView()) // 测量视距工具
 const showContour = ref(false) //是否显示等高线
+
 const showMeasureResult = ref(true)  //是否显示测量结果
 const drawPoint = reactive(new DrawPoint()) //绘制点工具
 const drawLine = reactive(new DrawLine()) //绘制线工具
 const drawLabel = reactive(new DrawLabel()) //绘制标签工具
+const searchRoute = reactive(new SearchRoute()) //路径规划工具
 
 var arrViewField = [];
 var viewModel = { verticalAngle: 90, horizontalAngle: 120, distance: 10 };
@@ -110,6 +114,7 @@ onMounted(() => {
     // var ellipsoidProvider = new Cesium.EllipsoidTerrainProvider();
     // viewer.terrainProvider = ellipsoidProvider;
 
+    // TODO: 代理
     // 建筑模型
     var city = viewer.scene.primitives.add(new Cesium.Cesium3DTileset(
         {
@@ -218,6 +223,7 @@ onMounted(() => {
     snowEffect.init(viewer);
     rainEffect.show(false);
     snowEffect.show(false);
+    searchRoute.init(viewer);
 })
 
 function activateMeasureDistance() {
@@ -269,6 +275,7 @@ function addViewField() {
                 viewModel.distance = e.distance
             }
         });
+
         arrViewField.push(e)
     })
 
@@ -279,6 +286,7 @@ function clearAllViewField() {
         arrViewField[e].destroy()
     }
     arrViewField = []
+
 }
 
 function showOrHideContour(showContour) {
@@ -305,6 +313,12 @@ function changeOsmAlpha(alpha) {
     layer.alpha = alpha;
 }
 
+function activateSearchRoute() {
+    searchRoute.search();
+}
+
+
+
 function showOrHideMeasureResult(showMeasureResult) {
     if (showMeasureResult) {
         measureDistance.showMeasureResult();
@@ -312,12 +326,14 @@ function showOrHideMeasureResult(showMeasureResult) {
         measureHeight.showMeasureResult();
         measureAltitude.showMeasureResult();
         measureAngle.showMeasureResult();
+        measureArea.showMeasureResult();
     } else {
         measureDistance.hideMeasureResult();
         measureDistanceFitTerrain.hideMeasureResult();
         measureHeight.hideMeasureResult();
         measureAltitude.hideMeasureResult();
         measureAngle.hideMeasureResult();
+        measureArea.hideMeasureResult();
     }
 }
 
